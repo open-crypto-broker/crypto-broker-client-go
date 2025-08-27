@@ -12,3 +12,6 @@ exclude_rule 'MD024'
 
 # Not all Markdown files will start with a top level header, some have metadata.
 exclude_rule 'MD041'
+
+# Some code lines need to start with spaces for better code visibility
+exclude_rule 'MD009'

@@ -115,7 +115,8 @@ Note that, by default, Taskfile will import a local `.env` file located in the d
 
 ### Testing
 
-The client is meant to be tested using the standard Golang Testing `go test`. Due to the library using a server, during testing, the responses from the server are mocked to test the client's functionality.  The purpose of this testing is thus to ensure compliance project-wide and that the client follows the general [library's specification](https://github.com/open-crypto-broker/crypto-broker-documentation/blob/main/spec/0003-library.md). For a full end to end testing, please check the [deployment repository](https://github.com/open-crypto-broker/crypto-broker-deployment).
+The client is meant to be tested using the standard Golang Testing `go test`. Due to the library using a server, during testing, the responses from the server are mocked to test the client's functionality.  The purpose of this testing is thus to ensure compliance project-wide and that the client follows the general [library's specification](https://github.com/open-crypto-broker/crypto-broker-documentation/blob/main/spec/0003-library.md).
+For a full end to end testing, please check the [deployment repository](https://github.com/open-crypto-broker/crypto-broker-deployment).
 
 If you want to additionally invoke the local pipeline for code formatting, you can run all of these commands with:
 
