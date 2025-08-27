@@ -32,6 +32,6 @@ go.work.sum
 # Built Visual Studio Code Extensions
 *.vsix
 
-# binary files
+# ignore binary files, but keep the folder structure
 cli/bin/**
-!**/.gitkeep
+!cli/bin
