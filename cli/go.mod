@@ -1,4 +1,4 @@
-module test-app
+module client-cli
 
 go 1.24.2
 

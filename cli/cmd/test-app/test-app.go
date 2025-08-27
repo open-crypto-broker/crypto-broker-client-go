@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"test-app/internal/command"
+	"client-cli/internal/command"
 	"time"
 )
 
