@@ -33,5 +33,5 @@ go.work.sum
 *.vsix
 
 # binary files
-!cli/bin/*.gitkeep
 cli/bin/**
+!**/.gitkeep
