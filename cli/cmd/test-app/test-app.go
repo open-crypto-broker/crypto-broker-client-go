@@ -3,12 +3,12 @@
 package main
 
 import (
+	"client-cli/internal/command"
 	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"client-cli/internal/command"
 	"time"
 )
 
