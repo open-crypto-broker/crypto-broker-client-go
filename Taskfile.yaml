@@ -4,7 +4,7 @@ tasks:
   proto:
     desc: "Generates Go stubs from proto files"
     cmds:
-      - git submodule update --recursive
+      - git submodule update --init --recursive
       - protoc --go_out=. --go-grpc_out=. protobuf/messages.proto
 
   build-go:
