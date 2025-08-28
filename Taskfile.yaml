@@ -1,0 +1,50 @@
+version: '3'
+
+tasks:
+  proto:
+    desc: "Generates Go stubs from proto files"
+    cmds:
+      - git submodule update --init --recursive
+      - protoc --go_out=. --go-grpc_out=. protobuf/messages.proto
+
+  build-go:
+    desc: "Generates test-app CLI and compiles it to cli/bin/test-app"
+    dir: ./cli
+    cmds:
+      - go build -o ./bin/test-app cmd/test-app/test-app.go
+    sources:
+      - cmd/test-app/test-app.go
+      - internal/**/*.go
+      - ./*.go
+      - go.mod
+      - go.sum
+    generates:
+      - bin/test-app
+
+  build:
+    desc: "Builds the Docker image for the client app"
+    vars:
+      TAG: '{{.TAG| default "latest"}}'
+    dotenv: ['.env']
+    cmds:
+      - docker buildx build -f ./cli/Dockerfile -t client_app_go:{{.TAG}} .
+
+  run-hash:
+    deps: [build-go]
+    desc: "Quick command for easy testing: runs the hashing command with Default profile"
+    cmds:
+      - ./cli/bin/test-app --profile=Default hash "Hello"
+
+  run-sign:
+    deps: [build-go]
+    desc: "Quick command for easy testing: runs certificate signing command with Default profile"
+    cmds:
+      - ./cli/bin/test-app --profile=Default sign ../crypto-broker-deployment/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/k8s/kube-broker/files/certificates/private_key.pem
+
+  ci:
+    desc: "Runs local continuous integration checks on source code"
+    cmds:
+      - go fmt ./...
+      - go vet ./...
+      - go test ./... -cover
+      - govulncheck ./...
