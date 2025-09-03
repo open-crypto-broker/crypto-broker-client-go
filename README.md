@@ -28,38 +28,40 @@ lib, err := cryptobrokerclientgo.NewLibrary()
 if err != nil {
     panic(err)
 }
+
+defer lib.Close()
 ctx = context.Background()
 
-// Hashing
-opts := cryptobrokerclientgo.HashingOpts{
-    Input:      dataToHash, 
-    Profile:    profile,
-    // Optional fields
-    Metadata:   &Metadata{
-            Id:        uuid.New().String(),
-            CreatedAt: time.Now().UTC().Format(time.RFC3339),
+payload := cryptobrokerclientgo.HashDataPayload{
+  Input:   []byte("Hello world"),
+  Profile: "Default",
+  Metadata: &cryptobrokerclientgo.Metadata{
+    Id:        uuid.New().String(),
+    CreatedAt: time.Now().UTC().Format(time.RFC3339),
   },
 }
-responseBody, err := lib.HashData(ctx, opts)
+responseBody, err := lib.HashData(ctx, payload)
+if err != nil {
+  panic(err)
+}
 fmt.Printf("Hashed string: %s\n", responseBody.hashValue)
 
 // Signing
-beforeOffset    := "0s"
-afterOffset     := "8740h"
-opts := cryptobrokerclientgo.SigningOpts{
-    Profile:                profile,
-    CSR:                    rawContentCSR,
-    CAPrivateKey:           rawContentSigningKey,
-    CACert:                 rawContentCACert,
-    // Optional fields
-    ValidNotBeforeOffset:   &beforeOffset,
-    ValidNotAfterOffset:    &afterOffset,
-    Metadata:               &Metadata{
-            Id:        uuid.New().String(),
-            CreatedAt: time.Now().UTC().Format(time.RFC3339),
+payload := cryptobrokerclientgo.SignCertificatePayload{
+  Profile:      Profile,
+  CSR:          rawContentCSR,
+  CAPrivateKey: rawContentSigningKey,
+  CACert:       rawContentCACert,
+  Subject:      &customSubject,
+  Metadata: &cryptobrokerclientgo.Metadata{
+    Id:        uuid.New().String(),
+    CreatedAt: time.Now().UTC().Format(time.RFC3339),
   },
 }
 responseBody, err := lib.SignCertificate(ctx, opts)
+if err != nil {
+  panic(err)
+}
 fmt.Printf("Signed certificate: %s\n", responseBody.signedCertificate)
 ```
 
@@ -80,6 +82,12 @@ git config core.hooksPath .githooks
 ```
 
 This commit hook will make sure the code follows the standard formatting and keep everything consistent.
+
+Additionally, please download all required tools for project development. This may require using "sudo". Please read docs of [tools](./Taskfile.yaml) for more info.  
+
+```bash
+task tools
+```
 
 ### Building
 
