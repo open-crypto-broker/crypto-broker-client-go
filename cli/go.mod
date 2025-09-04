@@ -2,11 +2,11 @@ module client-cli
 
 go 1.24.2
 
-replace github.tools.sap/apeirora-crypto-agility/crypto-broker-client-go => ./..
+replace github.com/open-crypto-broker/crypto-broker-client-go => ./..
 
 require (
 	github.com/google/uuid v1.6.0
-	github.tools.sap/apeirora-crypto-agility/crypto-broker-client-go v1.2.3
+	github.com/open-crypto-broker/crypto-broker-client-go v1.2.3
 )
 
 require (

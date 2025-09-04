@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.tools.sap/apeirora-crypto-agility/crypto-broker-client-go/internal/protobuf"
+	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 )
 
 // SigningOpts defines data that need to be provided in order to invoke signing of a certificate.
