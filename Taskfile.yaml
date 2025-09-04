@@ -52,13 +52,13 @@ tasks:
       - docker buildx build -f ./cli/Dockerfile -t client_app_go:{{.TAG}} .
 
   test-hash:
-    deps: [build-go]
+    deps: [build]
     desc: "Quick command for easy testing: runs the hashing command with Default profile"
     cmds:
       - ./cli/bin/test-app --profile=Default hash "Hello"
 
   test-sign:
-    deps: [build-go]
+    deps: [build]
     desc: "Quick command for easy testing: runs certificate signing command with Default profile"
     cmds:
       - ./cli/bin/test-app --profile=Default sign ../crypto-broker-deployment/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/k8s/kube-broker/files/certificates/private_key.pem
