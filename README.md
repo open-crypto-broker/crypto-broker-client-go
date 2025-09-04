@@ -9,7 +9,7 @@ The Crypto Broker Client is a library written in Golang that allows users to int
 Run this command in your Go repository in order to install the library:
 
 ```shell
-go get https://github.com/open-crypto-broker/crypto-broker-client-go
+go get github.com/open-crypto-broker/crypto-broker-client-go
 ```
 
 ### Library Usage
@@ -28,38 +28,40 @@ lib, err := cryptobrokerclientgo.NewLibrary()
 if err != nil {
     panic(err)
 }
+
+defer lib.Close()
 ctx = context.Background()
 
-// Hashing
-opts := cryptobrokerclientgo.HashingOpts{
-    Input:      dataToHash, 
-    Profile:    profile,
-    // Optional fields
-    Metadata:   &Metadata{
-            Id:        uuid.New().String(),
-            CreatedAt: time.Now().UTC().Format(time.RFC3339),
+payload := cryptobrokerclientgo.HashDataPayload{
+  Input:   []byte("Hello world"),
+  Profile: "Default",
+  Metadata: &cryptobrokerclientgo.Metadata{
+    Id:        uuid.New().String(),
+    CreatedAt: time.Now().UTC().Format(time.RFC3339),
   },
 }
-responseBody, err := lib.HashData(ctx, opts)
+responseBody, err := lib.HashData(ctx, payload)
+if err != nil {
+  panic(err)
+}
 fmt.Printf("Hashed string: %s\n", responseBody.hashValue)
 
 // Signing
-beforeOffset    := "0s"
-afterOffset     := "8740h"
-opts := cryptobrokerclientgo.SigningOpts{
-    Profile:                profile,
-    CSR:                    rawContentCSR,
-    CAPrivateKey:           rawContentSigningKey,
-    CACert:                 rawContentCACert,
-    // Optional fields
-    ValidNotBeforeOffset:   &beforeOffset,
-    ValidNotAfterOffset:    &afterOffset,
-    Metadata:               &Metadata{
-            Id:        uuid.New().String(),
-            CreatedAt: time.Now().UTC().Format(time.RFC3339),
+payload = cryptobrokerclientgo.SignCertificatePayload{
+  Profile:      Profile,
+  CSR:          rawContentCSR,
+  CAPrivateKey: rawContentSigningKey,
+  CACert:       rawContentCACert,
+  Subject:      &customSubject,
+  Metadata: &cryptobrokerclientgo.Metadata{
+    Id:        uuid.New().String(),
+    CreatedAt: time.Now().UTC().Format(time.RFC3339),
   },
 }
-responseBody, err := lib.SignCertificate(ctx, opts)
+responseBody, err := lib.SignCertificate(ctx, payload)
+if err != nil {
+  panic(err)
+}
 fmt.Printf("Signed certificate: %s\n", responseBody.signedCertificate)
 ```
 
@@ -81,6 +83,12 @@ git config core.hooksPath .githooks
 
 This commit hook will make sure the code follows the standard formatting and keep everything consistent.
 
+Additionally, please download all required tools for project development. This may require using "sudo". Please read docs of [tools](./Taskfile.yaml) for more info.  
+
+```bash
+task tools
+```
+
 ### Building
 
 #### Compiling the Go binaries
@@ -88,7 +96,7 @@ This commit hook will make sure the code follows the standard formatting and kee
 For testing the application, you can build the local CLI with the following command:
 
 ```shell
-task build-go
+task build
 ```
 
 This will also save a checksum of all the file `sources` in the Taskfile cache `.task`. This means that, if no new changes are done, re-running the task will not build the app again.
@@ -106,7 +114,7 @@ task proto
 For building the image for local use, you can use the command:
 
 ```shell
-task build [TAG=opt]
+task build-docker [TAG=opt]
 ```
 
 The TAG argument is optional and will apply a custom image tag to the built images. If not specified, it defaults to `latest`. This will create a local image tagged as `server_app:TAG`, which will be saved in your local Docker repository. If you want to modify or append args to the build command, please refer to the one from the Taskfile.
@@ -127,9 +135,9 @@ task ci
 You can do a local end2end testing of the application yourself with the provided CLI. To run the CLI, you first need to have the [Crypto Broker server](https://github.com/open-crypto-broker/crypto-broker-server/) running in your Unix localhost environment. Once done, you can run one of the following in another terminal:
 
 ```shell
-task run-hash
+task test-hash
 # or
-task run-sign
+task test-sign
 ```
 
 For the sign command, you need to have the [deployment repository](https://github.com/open-crypto-broker/crypto-broker-deployment) in the same parent directory as this repository. Check the command definitions in the `Taskfile` file to run your own custom commands.

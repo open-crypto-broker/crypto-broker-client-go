@@ -6,7 +6,7 @@ import (
 	"net"
 	"path/filepath"
 
-	"github.tools.sap/apeirora-crypto-agility/crypto-broker-client-go/internal/protobuf"
+	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

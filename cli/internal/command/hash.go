@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/uuid"
 
-	cryptobrokerclientgo "github.tools.sap/apeirora-crypto-agility/crypto-broker-client-go"
+	cryptobrokerclientgo "github.com/open-crypto-broker/crypto-broker-client-go"
 )
 
 // Hash represents command that repeatily sends hash request to crypto broker and displays its response

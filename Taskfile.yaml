@@ -1,13 +1,35 @@
 version: '3'
 
 tasks:
+
+  # This command may require to be run with "sudo". 
+  # User should have $GOPATH/bin dir in $PATH.
+  #
+  # Additional resources:
+  # - https://go.dev/doc/install
+  # - https://protobuf.dev/getting-started/gotutorial/
+  # - https://protobuf.dev/installation/
+  # - https://go.dev/doc/tutorial/govulncheck
+  # - https://docs.docker.com/reference/cli/docker/buildx/
+  tools:
+    desc: "Downloads all required tools required to develop project"
+    cmds:
+      - go install golang.org/x/vuln/cmd/govulncheck@latest
+      - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+      - apt install -y protobuf-compiler
+
+      # depending whether command was run with or without "sudo", it may
+      # influence whether this step succeds. In case of error, please manually
+      # check if tools are installed correctly (with or without "sudo" command)
+      - protoc --version && govulncheck --version && protoc-gen-go --version
+
   proto:
     desc: "Generates Go stubs from proto files"
     cmds:
       - git submodule update --init --recursive
       - protoc --go_out=. --go-grpc_out=. protobuf/messages.proto
 
-  build-go:
+  build:
     desc: "Generates test-app CLI and compiles it to cli/bin/test-app"
     dir: ./cli
     cmds:
@@ -21,7 +43,7 @@ tasks:
     generates:
       - bin/test-app
 
-  build:
+  build-docker:
     desc: "Builds the Docker image for the client app"
     vars:
       TAG: '{{.TAG| default "latest"}}'
@@ -29,14 +51,14 @@ tasks:
     cmds:
       - docker buildx build -f ./cli/Dockerfile -t client_app_go:{{.TAG}} .
 
-  run-hash:
-    deps: [build-go]
+  test-hash:
+    deps: [build]
     desc: "Quick command for easy testing: runs the hashing command with Default profile"
     cmds:
       - ./cli/bin/test-app --profile=Default hash "Hello"
 
-  run-sign:
-    deps: [build-go]
+  test-sign:
+    deps: [build]
     desc: "Quick command for easy testing: runs certificate signing command with Default profile"
     cmds:
       - ./cli/bin/test-app --profile=Default sign ../crypto-broker-deployment/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/k8s/kube-broker/files/certificates/private_key.pem
