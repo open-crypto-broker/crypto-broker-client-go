@@ -1,4 +1,4 @@
-module github.tools.sap/apeirora-crypto-agility/crypto-broker-client-go
+module github.com/open-crypto-broker/crypto-broker-client-go
 
 go 1.24.2
 

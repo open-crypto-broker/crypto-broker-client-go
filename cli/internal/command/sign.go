@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	cryptobrokerclientgo "github.tools.sap/apeirora-crypto-agility/crypto-broker-client-go"
+	cryptobrokerclientgo "github.com/open-crypto-broker/crypto-broker-client-go"
 )
 
 type Sign struct {

@@ -10,6 +10,7 @@ tasks:
   # - https://protobuf.dev/getting-started/gotutorial/
   # - https://protobuf.dev/installation/
   # - https://go.dev/doc/tutorial/govulncheck
+  # - https://docs.docker.com/reference/cli/docker/buildx/
   tools:
     desc: "Downloads all required tools required to develop project"
     cmds:
@@ -28,7 +29,7 @@ tasks:
       - git submodule update --init --recursive
       - protoc --go_out=. --go-grpc_out=. protobuf/messages.proto
 
-  build-go:
+  build:
     desc: "Generates test-app CLI and compiles it to cli/bin/test-app"
     dir: ./cli
     cmds:
@@ -42,7 +43,7 @@ tasks:
     generates:
       - bin/test-app
 
-  build:
+  build-docker:
     desc: "Builds the Docker image for the client app"
     vars:
       TAG: '{{.TAG| default "latest"}}'
@@ -50,13 +51,13 @@ tasks:
     cmds:
       - docker buildx build -f ./cli/Dockerfile -t client_app_go:{{.TAG}} .
 
-  run-hash:
+  test-hash:
     deps: [build-go]
     desc: "Quick command for easy testing: runs the hashing command with Default profile"
     cmds:
       - ./cli/bin/test-app --profile=Default hash "Hello"
 
-  run-sign:
+  test-sign:
     deps: [build-go]
     desc: "Quick command for easy testing: runs certificate signing command with Default profile"
     cmds:
