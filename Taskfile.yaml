@@ -13,8 +13,8 @@ tasks:
   # - https://docs.docker.com/reference/cli/docker/buildx/
   tools:
     desc: "Downloads all required tools required to develop project"
+    deps: [install-go-vulnerability-check]
     cmds:
-      - go install golang.org/x/vuln/cmd/govulncheck@latest
       - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
       - apt install -y protobuf-compiler
 
@@ -23,11 +23,22 @@ tasks:
       # check if tools are installed correctly (with or without "sudo" command)
       - protoc --version && govulncheck --version && protoc-gen-go --version
 
+  install-go-vulnerability-check:
+    desc: "Install Go vulnerability checking tool"
+    internal: true
+    cmds:
+      - go install golang.org/x/vuln/cmd/govulncheck@latest
+
   proto:
     desc: "Generates Go stubs from proto files"
     cmds:
       - git submodule update --init --recursive
       - protoc --go_out=. --go-grpc_out=. protobuf/messages.proto
+
+  check-dependencies:
+    desc: "Set the dependencies"
+    cmds:
+      - go mod tidy && go mod verify
 
   format:
     desc: "Apply formatting rules to Go code"
@@ -38,6 +49,17 @@ tasks:
     desc: "Apply linting to Go code"
     cmds:
       - go vet ./...
+
+  unit-test:
+    desc: "Run unit-tests"
+    cmds:
+      - go test ./... -cover
+
+  vulnerability-check:
+    desc: "Run vulnerability check"
+    deps: [install-go-vulnerability-check]
+    cmds:
+      - govulncheck ./...
 
   build:
     desc: "Build example client CLI"
@@ -82,7 +104,8 @@ tasks:
   ci:
     desc: "Runs local continuous integration checks on source code"
     cmds:
+      - task: check-dependencies
       - task: format
       - task: lint
-      - go test ./... -cover
-      - govulncheck ./...
+      - task: unit-test
+      - task: vulnerability-check
