@@ -36,14 +36,14 @@ func main() {
 	args := flag.Args()
 
 	if len(args) < 1 {
-		fmt.Println(`Simple CLI that knows how to work with crypto broker. It has few commands.
+		fmt.Println(`Example CLI that interacts with Crypto Broker
 
 Usage:
   client [flags] command_name [arguments...]
 
 Available Commands:
-  hash		Runs logic that periodicaly sends hashing request to crypto broker
-  sign		Runs logic that periodically requests a CSR. It requires paths to: csr, ca-cert, singing key as arguments`)
+  hash		Send periodically hashing request to crypto broker
+  sign		Send periodically a CSR. It requires paths to: csr, ca-cert, singing key as arguments`)
 		os.Exit(0)
 	}
 

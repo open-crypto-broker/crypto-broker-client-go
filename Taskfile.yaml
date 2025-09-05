@@ -2,7 +2,7 @@ version: '3'
 
 tasks:
 
-  # This command may require to be run with "sudo". 
+  # This command may require to be run with "sudo".
   # User should have $GOPATH/bin dir in $PATH.
   #
   # Additional resources:
@@ -29,19 +29,30 @@ tasks:
       - git submodule update --init --recursive
       - protoc --go_out=. --go-grpc_out=. protobuf/messages.proto
 
+  format:
+    desc: "Apply formatting rules to Go code"
+    cmds:
+      - go fmt ./...
+
+  lint:
+    desc: "Apply linting to Go code"
+    cmds:
+      - go vet ./...
+
   build:
-    desc: "Generates test-app CLI and compiles it to cli/bin/test-app"
+    desc: "Build example client CLI"
+    deps: [format, lint]
     dir: ./cli
     cmds:
-      - go build -o ./bin/test-app cmd/test-app/test-app.go
+      - go build -o ./bin/go-client-cli cmd/client-cli/client-cli.go
     sources:
-      - cmd/test-app/test-app.go
+      - cmd/client-cli/client-cli.go
       - internal/**/*.go
       - ./*.go
       - go.mod
       - go.sum
     generates:
-      - bin/test-app
+      - bin/go-client-cli
 
   build-docker:
     desc: "Builds the Docker image for the client app"
@@ -51,22 +62,27 @@ tasks:
     cmds:
       - docker buildx build -f ./cli/Dockerfile -t client_app_go:{{.TAG}} .
 
+  delete:
+    desc: "Delete binary artifacts"
+    cmds:
+      - rm cli/bin/*
+
   test-hash:
     deps: [build]
-    desc: "Quick command for easy testing: runs the hashing command with Default profile"
+    desc: "Test hashing command with Default profile"
     cmds:
-      - ./cli/bin/test-app --profile=Default hash "Hello"
+      - ./cli/bin/go-client-cli --profile=Default hash "Hello"
 
   test-sign:
     deps: [build]
-    desc: "Quick command for easy testing: runs certificate signing command with Default profile"
+    desc: "Test certificate signing command with Default profile"
     cmds:
-      - ./cli/bin/test-app --profile=Default sign ../crypto-broker-deployment/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/k8s/kube-broker/files/certificates/private_key.pem
+      - ./cli/bin/go-client-cli --profile=Default sign ../crypto-broker-deployment/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/k8s/kube-broker/files/certificates/private_key.pem
 
   ci:
     desc: "Runs local continuous integration checks on source code"
     cmds:
-      - go fmt ./...
-      - go vet ./...
+      - task: format
+      - task: lint
       - go test ./... -cover
       - govulncheck ./...
