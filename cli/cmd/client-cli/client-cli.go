@@ -35,15 +35,17 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	if len(args) < 1 {
-		fmt.Println(`Example CLI that interacts with Crypto Broker
+	globalUsage := `Example CLI that interacts with Crypto Broker
 
 Usage:
   client [flags] command_name [arguments...]
 
 Available Commands:
-  hash		Send periodically hashing request to crypto broker
-  sign		Send periodically a CSR. It requires paths to: csr, ca-cert, singing key as arguments`)
+  hash		Send hashing request to crypto broker
+  sign		Send signing request to crypto broker`
+	if len(args) < 1 {
+		fmt.Println(globalUsage)
+		
 		os.Exit(0)
 	}
 
@@ -57,9 +59,21 @@ Available Commands:
 
 	switch args[0] {
 	case commandHashName:
+		usage := `Hash sends hashing request to crypto broker.
+
+Example:
+	client-cli --profile=Default hash "Hello world"
+
+Arguments:
+	1. Sequence of bytes that are meant to be hashed
+
+Flags:
+	--profile={PROFILE_NAME}`
 		arguments := args[1:]
 		if len(arguments) < nArgsHash {
-			logger.Fatalf("Please provide exactly %d argument(s) to command", nArgsHash)
+			fmt.Println(usage)
+
+			os.Exit(1)
 		}
 
 		commandHash := command.InitHash(logger)
@@ -67,9 +81,23 @@ Available Commands:
 			logger.Fatal(err) // os.Exit(1)
 		}
 	case commandSignName:
+		usage := `Sign sends certificate signing request to crypto broker.
+
+Example:
+	client-cli --profile=Default sign ./certificate_signing_request.csr ./ca_cert.pem ./private_key.pem
+
+Arguments:
+	1. Relative OS path to certificate signing request file
+	2. Relative OS path to CA certificate file
+	3. Relative OS path to private key file
+
+Flags:
+	--profile={PROFILE_NAME}`
 		arguments := args[1:]
 		if len(arguments) < nArgsSign {
-			logger.Fatalf("Please provide exactly %d argument(s) to command", nArgsSign)
+			fmt.Println(usage)
+
+			os.Exit(1)
 		}
 
 		commandSign := command.InitSign(logger)
@@ -77,7 +105,9 @@ Available Commands:
 			logger.Fatal(err) // os.Exit(1)
 		}
 	default:
-		logger.Fatalf("Invalid argument value, got %s .  Valid arguments: '%s' or '%s'", args[0], commandHashName, commandSignName)
+		fmt.Println(globalUsage)
+
+		os.Exit(1)
 	}
 
 	os.Exit(0)
