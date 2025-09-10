@@ -14,6 +14,7 @@ import (
 
 var (
 	flagProfile string
+	flagHelp bool
 )
 
 const (
@@ -32,6 +33,7 @@ const (
 // main defines executable program logic
 func main() {
 	flag.StringVar(&flagProfile, "profile", "Default", "Specify profile to used")
+	flag.BoolVar(&flagHelp, "h", false, "Displays CLI usage string")
 	flag.Parse()
 	args := flag.Args()
 
@@ -46,6 +48,12 @@ Available Commands:
 	if len(args) < 1 {
 		fmt.Println(globalUsage)
 		
+		os.Exit(0)
+	}
+
+	if flagHelp {
+		fmt.Println(globalUsage)
+
 		os.Exit(0)
 	}
 
