@@ -84,7 +84,7 @@ tasks:
     cmds:
       - docker buildx build -f ./cli/Dockerfile -t client_app_go:{{.TAG}} .
 
-  delete:
+  delete-binaries:
     desc: "Delete binary artifacts"
     cmds:
       - rm cli/bin/*
