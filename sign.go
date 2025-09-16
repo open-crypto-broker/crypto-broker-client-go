@@ -2,12 +2,37 @@ package cryptobrokerclientgo
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/pem"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 )
+
+// WithBase64Encoding returns a function that sets the output certificate encoding to base64.
+// In SignCertificate method DER encoded certificate is returned as base64 encrypted string.
+func WithBase64Encoding() func(opts *optionsSignCertificate) {
+	return func(opts *optionsSignCertificate) {
+		opts.outputCertificateEncoding = b64
+	}
+}
+
+// WithPEMEncoding returns a function that sets the output certificate encoding to PEM.
+func WithPEMEncoding() func(opts *optionsSignCertificate) {
+	return func(opts *optionsSignCertificate) {
+		opts.outputCertificateEncoding = privacyEnhancedMail
+	}
+}
+
+// optionsSignCertificate represents options for signing certificate method.
+type optionsSignCertificate struct {
+
+	// outputCertificateEncoding represents encoding of the output certificate.
+	outputCertificateEncoding encoding
+}
 
 // SigningOpts defines data that need to be provided in order to invoke signing of a certificate.
 // The profile, CSR, Private Key and CA are mandatory, while the rest are optional. Optional fields
@@ -45,7 +70,17 @@ type SignCertificatePayload struct {
 
 // SignCertificate create certificate using crypto broker.
 // As result it returns signed x509 certificate or non-nil error if any.
-func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificatePayload) (*protobuf.SignResponse, error) {
+// Please familiarize yourself with the encoding options before using this method.
+func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificatePayload, optsFromCaller ...func(*optionsSignCertificate)) (*protobuf.SignResponse, error) {
+	options := &optionsSignCertificate{}
+	defaultOptions := lib.signCertificateDefaultOptions()
+	for _, opt := range defaultOptions {
+		opt(options)
+	}
+
+	for _, opt := range optsFromCaller {
+		opt(options)
+	}
 
 	// Create the Metadata on the fly if not provided
 	if payload.Metadata == nil {
@@ -70,5 +105,30 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 		},
 	}
 
-	return lib.client.Sign(ctx, req)
+	resp, err := lib.client.Sign(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	switch options.outputCertificateEncoding {
+	case b64:
+		return resp, nil
+	case privacyEnhancedMail:
+		certDER, err := base64.StdEncoding.DecodeString(resp.SignedCertificate)
+		if err != nil {
+			return nil, err
+		}
+
+		block := &pem.Block{Type: "CERTIFICATE", Bytes: certDER}
+		resp.SignedCertificate = string(pem.EncodeToMemory(block))
+
+		return resp, nil
+	default:
+		return nil, fmt.Errorf("unsupported encoding: %s", options.outputCertificateEncoding)
+	}
+}
+
+// signCertificateDefaultOptions returns default options for signing certificate method.
+func (lib *Library) signCertificateDefaultOptions() []func(*optionsSignCertificate) {
+	return []func(*optionsSignCertificate){WithPEMEncoding()}
 }

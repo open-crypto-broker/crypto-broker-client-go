@@ -99,7 +99,7 @@ tasks:
     deps: [build]
     desc: "Test certificate signing command with Default profile"
     cmds:
-      - ./cli/bin/go-client-cli --profile=Default sign ../crypto-broker-deployment/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/k8s/kube-broker/files/certificates/private_key.pem
+      - ./cli/bin/go-client-cli --profile=Default sign ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/private_key.pem
 
   ci:
     desc: "Runs local continuous integration checks on source code"
