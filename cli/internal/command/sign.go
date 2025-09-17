@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"crypto/x509/pkix"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,7 +32,7 @@ func InitSign(logger *log.Logger) *Sign {
 }
 
 // Run executes command logic.
-func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, filePathSigningKey string, flagProfile string, flagEncoding string, delay time.Duration) error {
+func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, filePathSigningKey, flagProfile, flagEncoding, flagSubject string, delay time.Duration) error {
 	defer command.gracefulShutdown()
 
 	rawContentCSR, err := command.readFileBytes(filePathCSR)
@@ -51,20 +50,19 @@ func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, fileP
 		return fmt.Errorf("could not read signing key file, err: %w", err)
 	}
 
-	customSubject := pkix.Name{
-		Country:      []string{"DE"},
-		Province:     []string{"BA"},
-		Organization: []string{"SAP"},
-		CommonName:   "MyCert",
-		SerialNumber: "01234556",
-	}.String()
+	var subject *string
+	if flagSubject != "" {
+		subject = &flagSubject
+	} else {
+		subject = nil
+	}
 
 	payload := cryptobrokerclientgo.SignCertificatePayload{
 		Profile:      flagProfile,
 		CSR:          rawContentCSR,
 		CAPrivateKey: rawContentSigningKey,
 		CACert:       rawContentCACert,
-		Subject:      &customSubject,
+		Subject:      subject,
 		Metadata: &cryptobrokerclientgo.Metadata{
 			Id:        uuid.New().String(),
 			CreatedAt: time.Now().UTC().Format(time.RFC3339),
@@ -73,8 +71,6 @@ func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, fileP
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-
-
 
 	isDeployed := os.Getenv("DOCKER_DEPLOYED")
 	if strings.ToLower(isDeployed) == "true" {

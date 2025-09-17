@@ -16,6 +16,7 @@ var (
 	flagProfile string
 	flagHelp bool
 	flagEncoding string
+	flagSubject string
 )
 
 const (
@@ -35,6 +36,7 @@ const (
 func main() {
 	flag.StringVar(&flagProfile, "profile", "Default", "Specify profile to be used")
 	flag.StringVar(&flagEncoding, "encoding", "PEM", "Specify encoding to be used")
+	flag.StringVar(&flagSubject, "subject", "", "Specify subject to be used for certificate generation")
 	flag.BoolVar(&flagHelp, "h", false, "Displays CLI usage string")
 	flag.Parse()
 	args := flag.Args()
@@ -103,7 +105,8 @@ Arguments:
 
 Flags:
 	--profile={PROFILE_NAME}
-	--encoding={PEM|B64}`
+	--encoding={PEM|B64}
+	--subject={SUBJECT}`
 		arguments := args[1:]
 		if len(arguments) < nArgsSign {
 			fmt.Println(usage)
@@ -112,7 +115,7 @@ Flags:
 		}
 
 		commandSign := command.InitSign(logger)
-		if err := commandSign.Run(context.Background(), arguments[0], arguments[1], arguments[2], flagProfile, flagEncoding, toSleep); err != nil {
+		if err := commandSign.Run(context.Background(), arguments[0], arguments[1], arguments[2], flagProfile, flagEncoding, flagSubject, toSleep); err != nil {
 			logger.Fatal(err) // os.Exit(1)
 		}
 	default:
