@@ -33,8 +33,8 @@ const (
 
 // main defines executable program logic
 func main() {
-	flag.StringVar(&flagProfile, "profile", "Default", "Specify profile to used")
-	flag.StringVar(&flagEncoding, "encoding", "PEM", "Specify encoding to used")
+	flag.StringVar(&flagProfile, "profile", "Default", "Specify profile to be used")
+	flag.StringVar(&flagEncoding, "encoding", "PEM", "Specify encoding to be used")
 	flag.BoolVar(&flagHelp, "h", false, "Displays CLI usage string")
 	flag.Parse()
 	args := flag.Args()
