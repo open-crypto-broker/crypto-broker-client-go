@@ -22,8 +22,5 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Add the folder to the safe directories
-        run: git config --global --add safe.directory '/__w/crypto-broker/crypto-broker'
-
       - name: Run CI task from Taskfile
         run: task ci
