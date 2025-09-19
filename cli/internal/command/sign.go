@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"crypto/x509/pkix"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,7 +32,7 @@ func InitSign(logger *log.Logger) *Sign {
 }
 
 // Run executes command logic.
-func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, filePathSigningKey string, Profile string, delay time.Duration) error {
+func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, filePathSigningKey, flagProfile, flagEncoding, flagSubject string, delay time.Duration) error {
 	defer command.gracefulShutdown()
 
 	rawContentCSR, err := command.readFileBytes(filePathCSR)
@@ -51,20 +50,19 @@ func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, fileP
 		return fmt.Errorf("could not read signing key file, err: %w", err)
 	}
 
-	customSubject := pkix.Name{
-		Country:      []string{"DE"},
-		Province:     []string{"BA"},
-		Organization: []string{"SAP"},
-		CommonName:   "MyCert",
-		SerialNumber: "01234556",
-	}.String()
+	var subject *string
+	if flagSubject != "" {
+		subject = &flagSubject
+	} else {
+		subject = nil
+	}
 
 	payload := cryptobrokerclientgo.SignCertificatePayload{
-		Profile:      Profile,
+		Profile:      flagProfile,
 		CSR:          rawContentCSR,
 		CAPrivateKey: rawContentSigningKey,
 		CACert:       rawContentCACert,
-		Subject:      &customSubject,
+		Subject:      subject,
 		Metadata: &cryptobrokerclientgo.Metadata{
 			Id:        uuid.New().String(),
 			CreatedAt: time.Now().UTC().Format(time.RFC3339),
@@ -83,22 +81,28 @@ func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, fileP
 				return nil
 			default:
 				time.Sleep(delay)
-				if err := command.signCertificate(ctx, payload); err != nil {
+				
+				if err := command.signCertificate(ctx, payload, flagEncoding); err != nil {
 					return err
 				}
 			}
 		}
 	} else {
-		if err := command.signCertificate(ctx, payload); err != nil {
+		if err := command.signCertificate(ctx, payload, flagEncoding); err != nil {
 			return err
 		}
 		return nil
 	}
 }
 
-func (command *Sign) signCertificate(ctx context.Context, payload cryptobrokerclientgo.SignCertificatePayload) error {
+func (command *Sign) signCertificate(ctx context.Context, payload cryptobrokerclientgo.SignCertificatePayload, flagEncoding string) error {
 	timestampSignStart := time.Now()
-	responseBody, err := command.cryptoBrokerLibrary.SignCertificate(ctx, payload)
+	encodingOpt := cryptobrokerclientgo.WithPEMEncoding()
+	if strings.ToLower(flagEncoding) == "b64" {
+		encodingOpt = cryptobrokerclientgo.WithBase64Encoding()
+	}
+	
+	responseBody, err := command.cryptoBrokerLibrary.SignCertificate(ctx, payload, encodingOpt)
 	if err != nil {
 		return fmt.Errorf("failed to obtain signed certificate through CryptoBroker library, err: %w", err)
 	}
