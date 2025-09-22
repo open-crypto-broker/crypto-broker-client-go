@@ -1,33 +1,135 @@
 version: '3'
 
-tasks:
+vars:
+  PROTOBUF_VERSION: "32.1"
 
-  # This command may require to be run with "sudo".
-  # User should have $GOPATH/bin dir in $PATH.
-  #
+tasks:
+  ################# Development Tools ####################
   # Additional resources:
   # - https://go.dev/doc/install
   # - https://protobuf.dev/getting-started/gotutorial/
   # - https://protobuf.dev/installation/
   # - https://go.dev/doc/tutorial/govulncheck
-  # - https://docs.docker.com/reference/cli/docker/buildx/
   tools:
-    desc: "Downloads all required tools required to develop project"
-    deps: [install-go-vulnerability-check]
+    desc: "Download tools required for development"
+    deps: [install-protobuf-compiler, install-go-protoc-modules, install-go-vulnerability-check]
+    cmds:
+      - protoc --version && protoc-gen-go --version && govulncheck --version
+
+  # Public task to install the pre-built protobuf compiler depending on the architecture
+  install-protobuf-compiler:
+    desc: "Download and install pre-built protobuf compiler"
+    cmds:
+      - task: install-protobuf-compiler-linux-amd64
+      - task: install-protobuf-compiler-darwin
+
+  install-protobuf-compiler-linux-amd64:
+    desc: "Download and install pre-built protobuf compiler for Linux"
+    internal: true
+    platforms: ["linux/amd64"]
+    cmds:
+      # Create temporary download folder
+      - mkdir tmp-download
+      # Download specified version
+      - cd tmp-download && curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v{{.PROTOBUF_VERSION}}/protoc-{{.PROTOBUF_VERSION}}-linux-x86_64.zip
+      # Unzip download
+      - cd tmp-download && unzip protoc-{{.PROTOBUF_VERSION}}-linux-x86_64.zip -d $HOME/.local/share/protobuf/
+      # Remove temporary download folder
+      - rm -rf tmp-download
+      # Add path to .bashrc if it does not already exists
+      - grep -qx 'export PATH="$PATH:$HOME/.local/share/protobuf/bin"' ~/.bashrc || echo 'export PATH="$PATH:$HOME/.local/share/protobuf/bin"' >> ~/.bashrc
+      # Reload .bashrc
+      - source $HOME/.bashrc
+
+  install-protobuf-compiler-darwin:
+    desc: "Download and install protobuf compiler for Apple/macOS"
+    internal: true
+    platforms: ["darwin"]
+    cmds:
+      - brew install protobuf
+
+  # Public task to install Go modules needed for protobuf and gRPC generation
+  install-go-protoc-modules:
+    desc: "Install Go modules for protobuf and gRPC support"
+    cmds:
+      - task: install-go-protoc-modules-linux-amd64
+      - task: install-go-protoc-modules-darwin
+
+  install-go-protoc-modules-linux-amd64:
+    desc: "Install Go modules for protobuf and gRPC support for Linux"
+    internal: true
+    deps: [bash-add-go-path]
+    platforms: ["linux/amd64"]
     cmds:
       - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-      - apt install -y protobuf-compiler
+      - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-      # depending whether command was run with or without "sudo", it may
-      # influence whether this step succeds. In case of error, please manually
-      # check if tools are installed correctly (with or without "sudo" command)
-      - protoc --version && govulncheck --version && protoc-gen-go --version
+  install-go-protoc-modules-darwin:
+    desc: "Install Go modules for protobuf and gRPC support for Apple/macOS"
+    internal: true
+    platforms: ["darwin"]
+    cmds:
+      - brew install protoc-gen-go
+      - brew install protoc-gen-go-grpc
 
+  bash-add-go-path:
+    desc: "Add Go binary folder to .bashrc if it does not already exists"
+    internal: true
+    platforms: ["linux/amd64"]
+    cmds:
+      - grep -qx 'export PATH="$PATH:$(go env GOPATH)/bin"' ~/.bashrc || echo 'export PATH="$PATH:$(go env GOPATH)/bin"' >> ~/.bashrc
+      - source ~/.bashrc
+
+  # Public task to install Go vulnerability checking tool
   install-go-vulnerability-check:
     desc: "Install Go vulnerability checking tool"
+    cmds:
+      - task: install-go-vulnerability-check-linux-amd64
+      - task: install-go-vulnerability-check-darwin
+
+  install-go-vulnerability-check-linux-amd64:
+    desc: "Install Go vulnerability checking tool for Linux"
     internal: true
+    deps: [bash-add-go-path]
+    platforms: ["linux/amd64"]
     cmds:
       - go install golang.org/x/vuln/cmd/govulncheck@latest
+
+  install-go-vulnerability-check-darwin:
+    desc: "Install Go vulnerability checking tool for Apple/macOS"
+    internal: true
+    platforms: ["darwin"]
+    cmds:
+      - brew install govulncheck
+
+  ################# Build Go Client ####################
+  build:
+    desc: "Build example Go client CLI"
+    deps: [format, lint]
+    dir: ./cli
+    cmds:
+      - go build -o ./bin/go-client-cli cmd/client-cli/client-cli.go
+    sources:
+      - cmd/client-cli/client-cli.go
+      - internal/**/*.go
+      - ./*.go
+      - go.mod
+      - go.sum
+    generates:
+      - bin/go-client-cli
+
+  build-docker:
+    desc: "Build Docker image for the Go client app"
+    vars:
+      TAG: '{{.TAG | default "latest"}}'
+    dotenv: ['.env']
+    cmds:
+      - docker buildx build -f ./cli/Dockerfile -t client_app_go:{{.TAG}} .
+
+  delete-binaries:
+    desc: "Delete binary artifacts"
+    cmds:
+      - rm cli/bin/*
 
   proto:
     desc: "Generates Go stubs from proto files"
@@ -35,6 +137,20 @@ tasks:
       - git submodule update --init --recursive
       - protoc --go_out=. --go-grpc_out=. protobuf/messages.proto
 
+  ################# Tests ####################
+  test-hash:
+    deps: [build]
+    desc: "Test hashing command with Default profile"
+    cmds:
+      - ./cli/bin/go-client-cli --profile=Default hash "Hello"
+
+  test-sign:
+    deps: [build]
+    desc: "Test certificate signing command with Default profile"
+    cmds:
+      - ./cli/bin/go-client-cli --profile=Default sign ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/private_key.pem
+
+  ################# Continuous Improvement Tasks ####################
   check-dependencies:
     desc: "Set the dependencies"
     cmds:
@@ -61,48 +177,8 @@ tasks:
     cmds:
       - govulncheck ./...
 
-  build:
-    desc: "Build example client CLI"
-    deps: [format, lint]
-    dir: ./cli
-    cmds:
-      - go build -o ./bin/go-client-cli cmd/client-cli/client-cli.go
-    sources:
-      - cmd/client-cli/client-cli.go
-      - internal/**/*.go
-      - ./*.go
-      - go.mod
-      - go.sum
-    generates:
-      - bin/go-client-cli
-
-  build-docker:
-    desc: "Builds the Docker image for the client app"
-    vars:
-      TAG: '{{.TAG| default "latest"}}'
-    dotenv: ['.env']
-    cmds:
-      - docker buildx build -f ./cli/Dockerfile -t client_app_go:{{.TAG}} .
-
-  delete-binaries:
-    desc: "Delete binary artifacts"
-    cmds:
-      - rm cli/bin/*
-
-  test-hash:
-    deps: [build]
-    desc: "Test hashing command with Default profile"
-    cmds:
-      - ./cli/bin/go-client-cli --profile=Default hash "Hello"
-
-  test-sign:
-    deps: [build]
-    desc: "Test certificate signing command with Default profile"
-    cmds:
-      - ./cli/bin/go-client-cli --profile=Default sign ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/private_key.pem
-
   ci:
-    desc: "Runs local continuous integration checks on source code"
+    desc: "Runs continuous integration checks on source code"
     cmds:
       - task: check-dependencies
       - task: format
