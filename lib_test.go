@@ -1,7 +1,9 @@
 package cryptobrokerclientgo
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 	"google.golang.org/grpc"
@@ -9,17 +11,24 @@ import (
 
 func TestNewLibrary(t *testing.T) {
 	tests := []struct {
-		name    string
-		wantErr bool
+		name         string
+		ctxGenerator func() (context.Context, context.CancelFunc)
+		wantErr      bool
 	}{
 		{
-			name:    "NewLibrary() always succeeds while invoked in system supporing unix domain sockets",
-			wantErr: false,
+			name: "NewLibrary() fails if it cannot connect to server in context window",
+			ctxGenerator: func() (context.Context, context.CancelFunc) {
+				return context.WithTimeout(context.Background(), 1*time.Second)
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewLibrary()
+			ctx, cancel := tt.ctxGenerator()
+			defer cancel()
+
+			_, err := NewLibrary(ctx)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewLibrary() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -29,7 +38,7 @@ func TestNewLibrary(t *testing.T) {
 }
 
 func TestLibrary_Close(t *testing.T) {
-	workingLib, err := NewLibrary()
+	workingLib, err := NewLibrary(context.Background())
 	if err != nil {
 		t.Errorf("could not instantiate working instance of library, err: %s", err)
 

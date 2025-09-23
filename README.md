@@ -24,14 +24,13 @@ import "github.com/open-crypto-broker/crypto-broker-client-go"
 // ...existing code...
 
 // Library creation
-lib, err := cryptobrokerclientgo.NewLibrary()
+ctx = context.Background()
+lib, err := cryptobrokerclientgo.NewLibrary(ctx)
 if err != nil {
     panic(err)
 }
 
 defer lib.Close()
-ctx = context.Background()
-
 payload := cryptobrokerclientgo.HashDataPayload{
   Input:   []byte("Hello world"),
   Profile: "Default",

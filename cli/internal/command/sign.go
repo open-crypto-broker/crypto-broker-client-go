@@ -22,8 +22,8 @@ type Sign struct {
 }
 
 // InitSign initializes sign command. This may panic in case of failure.
-func InitSign(logger *log.Logger) *Sign {
-	lib, err := cryptobrokerclientgo.NewLibrary()
+func InitSign(ctx context.Context, logger *log.Logger) *Sign {
+	lib, err := cryptobrokerclientgo.NewLibrary(ctx)
 	if err != nil {
 		panic(err)
 	}

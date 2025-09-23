@@ -22,8 +22,8 @@ type Hash struct {
 }
 
 // InitHash initializes hash command. This may panic in case of failure.
-func InitHash(logger *log.Logger) *Hash {
-	lib, err := cryptobrokerclientgo.NewLibrary()
+func InitHash(ctx context.Context, logger *log.Logger) *Hash {
+	lib, err := cryptobrokerclientgo.NewLibrary(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +44,7 @@ func (command *Hash) Run(ctx context.Context, Input []byte, Profile string, dela
 		},
 	}
 
-	command.logger.Printf("Hashing %s using %s profile \n", string(Input), Profile)
+	command.logger.Printf("Hashing \"%s\" using %s profile \n", string(Input), Profile)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
