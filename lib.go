@@ -7,12 +7,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/status"
 )
 
 // defaultSocketPath defines default full OS path to socket file.
@@ -66,20 +64,25 @@ func (lib *Library) Close() error {
 
 // verifyConnection verifies connection between client and server in given context window
 func (lib *Library) verifyConnection(ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		_, err := lib.client.Hash(ctx, &protobuf.HashRequest{
-			Metadata: &protobuf.Metadata{Id: uuid.New().String(), CreatedAt: time.Now().UTC().Format(time.RFC3339)},
-			Input:    []byte("Hello world"),
-			Profile:  "Default",
-		}, grpc.WaitForReady(true))
+	lib.conn.Connect()
 
-		if status.Code(err) == codes.OK {
+	state := lib.conn.GetState()
+	for {
+		switch state {
+		case connectivity.Ready:
 			return nil
+		case connectivity.Shutdown:
+			return fmt.Errorf("connection is SHUTDOWN")
 		}
 
-		return err
+		if !lib.conn.WaitForStateChange(ctx, state) {
+			if ctx.Err() != nil {
+				return fmt.Errorf("connectivity did not reach READY before deadline: %w", ctx.Err())
+			}
+
+			return fmt.Errorf("connectivity wait aborted")
+		}
+
+		state = lib.conn.GetState()
 	}
 }
