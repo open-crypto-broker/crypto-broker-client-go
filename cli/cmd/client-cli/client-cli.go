@@ -88,7 +88,7 @@ Flags:
 			os.Exit(1)
 		}
 
-		commandHash := command.InitHash(logger)
+		commandHash := command.InitHash(context.Background(), logger)
 		if err := commandHash.Run(context.Background(), []byte(arguments[0]), flagProfile, toSleep); err != nil {
 			logger.Fatal(err) // os.Exit(1)
 		}
@@ -114,7 +114,7 @@ Flags:
 			os.Exit(1)
 		}
 
-		commandSign := command.InitSign(logger)
+		commandSign := command.InitSign(context.Background(), logger)
 		if err := commandSign.Run(context.Background(), arguments[0], arguments[1], arguments[2], flagProfile, flagEncoding, flagSubject, toSleep); err != nil {
 			logger.Fatal(err) // os.Exit(1)
 		}
