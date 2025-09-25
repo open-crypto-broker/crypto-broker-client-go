@@ -1,3 +1,5 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/open-crypto-broker/crypto-broker-client-go.svg)](https://pkg.go.dev/github.com/open-crypto-broker/crypto-broker-client-go)
+
 # Crypto Broker Client
 
 ## Usage
