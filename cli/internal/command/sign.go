@@ -32,7 +32,7 @@ func InitSign(ctx context.Context, logger *log.Logger) *Sign {
 }
 
 // Run executes command logic.
-func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, filePathSigningKey, flagProfile, flagEncoding, flagSubject string, delay time.Duration) error {
+func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, filePathSigningKey, flagProfile, flagEncoding, flagSubject string, flagLoop int64) error {
 	defer command.gracefulShutdown()
 
 	rawContentCSR, err := command.readFileBytes(filePathCSR)
@@ -72,15 +72,19 @@ func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, fileP
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	isDeployed := os.Getenv("DOCKER_DEPLOYED")
-	if strings.ToLower(isDeployed) == "true" {
+	if flagLoop >= 0 && flagLoop <= 1000 {
+		toSleep, err := time.ParseDuration(fmt.Sprintf("%dms", flagLoop))
+		if err != nil {
+			panic(err)
+		}
+
 		for {
 			select {
 			case <-c:
 				command.logger.Printf("Received SIGTERM singal\n")
 				return nil
 			default:
-				time.Sleep(delay)
+				time.Sleep(toSleep)
 				
 				if err := command.signCertificate(ctx, payload, flagEncoding); err != nil {
 					return err

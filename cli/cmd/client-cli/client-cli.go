@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 )
 
 var (
@@ -17,6 +16,7 @@ var (
 	flagHelp bool
 	flagEncoding string
 	flagSubject string
+	flagLoop int64
 )
 
 const (
@@ -37,6 +37,7 @@ func main() {
 	flag.StringVar(&flagProfile, "profile", "Default", "Specify profile to be used")
 	flag.StringVar(&flagEncoding, "encoding", "PEM", "Specify encoding to be used")
 	flag.StringVar(&flagSubject, "subject", "", "Specify subject to be used for certificate generation")
+	flag.Int64Var(&flagLoop, "loop", -1, "Specify delay for loop in miliseconds" )
 	flag.BoolVar(&flagHelp, "h", false, "Displays CLI usage string")
 	flag.Parse()
 	args := flag.Args()
@@ -61,12 +62,6 @@ Available Commands:
 		os.Exit(0)
 	}
 
-	// Delay needs to be less than 10 seconds for Kubernetes not to restart the app
-	toSleep, err := time.ParseDuration("5s")
-	if err != nil {
-		panic(err)
-	}
-
 	logger := log.New(os.Stdout, "CLIENT: ", log.Ldate|log.Lmicroseconds)
 
 	switch args[0] {
@@ -89,7 +84,7 @@ Flags:
 		}
 
 		commandHash := command.InitHash(context.Background(), logger)
-		if err := commandHash.Run(context.Background(), []byte(arguments[0]), flagProfile, toSleep); err != nil {
+		if err := commandHash.Run(context.Background(), []byte(arguments[0]), flagProfile, flagLoop); err != nil {
 			logger.Fatal(err) // os.Exit(1)
 		}
 	case commandSignName:
@@ -115,7 +110,8 @@ Flags:
 		}
 
 		commandSign := command.InitSign(context.Background(), logger)
-		if err := commandSign.Run(context.Background(), arguments[0], arguments[1], arguments[2], flagProfile, flagEncoding, flagSubject, toSleep); err != nil {
+		if err := commandSign.Run(context.Background(),
+		 arguments[0], arguments[1], arguments[2], flagProfile, flagEncoding, flagSubject, flagLoop); err != nil {
 			logger.Fatal(err) // os.Exit(1)
 		}
 	default:
