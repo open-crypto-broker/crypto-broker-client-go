@@ -3,10 +3,10 @@ package command
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -32,35 +32,40 @@ func InitHash(ctx context.Context, logger *log.Logger) *Hash {
 }
 
 // Run executes command logic.
-func (command *Hash) Run(ctx context.Context, Input []byte, Profile string, delay time.Duration) error {
+func (command *Hash) Run(ctx context.Context, input []byte, flagProfile string, flagLoop int64) error {
 	defer command.gracefulShutdown()
 
 	payload := cryptobrokerclientgo.HashDataPayload{
-		Input:   Input,
-		Profile: Profile,
+		Input:   input,
+		Profile: flagProfile,
 		Metadata: &cryptobrokerclientgo.Metadata{
 			Id:        uuid.New().String(),
 			CreatedAt: time.Now().UTC().Format(time.RFC3339),
 		},
 	}
 
-	command.logger.Printf("Hashing \"%s\" using %s profile \n", string(Input), Profile)
+	command.logger.Printf("Hashing \"%s\" using %s profile \n", string(input), flagProfile)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	isDeployed := os.Getenv("DOCKER_DEPLOYED")
-	if strings.ToLower(isDeployed) == "true" {
+	if flagLoop >= 0 && flagLoop <= 1000 {
+		toSleep, err := time.ParseDuration(fmt.Sprintf("%dms", flagLoop))
+		if err != nil {
+			panic(err)
+		}
+
 		for {
 			select {
 			case <-c:
-				command.logger.Printf("Received SIGTERM singal\n")
+				command.logger.Printf("Received SIGTERM signal\n")
 				return nil
 			default:
-				time.Sleep(delay)
 				if err := command.hashBytes(ctx, payload); err != nil {
 					return err
 				}
+
+				time.Sleep(toSleep)
 			}
 		}
 	} else {
