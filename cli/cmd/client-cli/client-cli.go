@@ -32,12 +32,16 @@ const (
 	nArgsSign = 3
 )
 
+const (
+	noLoopFlagValue = -1000001
+)
+
 // main defines executable program logic
 func main() {
 	flag.StringVar(&flagProfile, "profile", "Default", "Specify profile to be used")
 	flag.StringVar(&flagEncoding, "encoding", "PEM", "Specify encoding to be used")
 	flag.StringVar(&flagSubject, "subject", "", "Specify subject to be used for certificate generation")
-	flag.Int64Var(&flagLoop, "loop", -1, "Specify delay for loop in miliseconds" )
+	flag.Int64Var(&flagLoop, "loop", noLoopFlagValue, "Specify delay for loop in miliseconds (1-1000)" )
 	flag.BoolVar(&flagHelp, "h", false, "Displays CLI usage string")
 	flag.Parse()
 	args := flag.Args()
@@ -64,6 +68,7 @@ Available Commands:
 
 	logger := log.New(os.Stdout, "CLIENT: ", log.Ldate|log.Lmicroseconds)
 
+
 	switch args[0] {
 	case commandHashName:
 		usage := `Hash sends hashing request to crypto broker.
@@ -75,10 +80,17 @@ Arguments:
 	1. Sequence of bytes that are meant to be hashed
 
 Flags:
-	--profile={PROFILE_NAME}`
+	--profile={PROFILE_NAME}
+	--loop={DELAY_MS} (1-1000)`
 		arguments := args[1:]
 		if len(arguments) < nArgsHash {
 			fmt.Println(usage)
+
+			os.Exit(1)
+		}
+
+		if err := validateLoopFlag(flagLoop); err != nil {
+			fmt.Printf("Something went wrong with the loop flag, err: %s\n\n %s\n", err, usage)
 
 			os.Exit(1)
 		}
@@ -101,10 +113,17 @@ Arguments:
 Flags:
 	--profile={PROFILE_NAME}
 	--encoding={PEM|B64}
-	--subject={SUBJECT}`
+	--subject={SUBJECT}
+	--loop={DELAY_MS} (1-1000)`
 		arguments := args[1:]
 		if len(arguments) < nArgsSign {
 			fmt.Println(usage)
+
+			os.Exit(1)
+		}
+
+		if err := validateLoopFlag(flagLoop); err != nil {
+			fmt.Printf("Something went wrong with the loop flag, err: %s\n\n %s\n", err, usage)
 
 			os.Exit(1)
 		}
@@ -121,4 +140,16 @@ Flags:
 	}
 
 	os.Exit(0)
+}
+
+func validateLoopFlag(loop int64) error {
+	if loop == noLoopFlagValue {
+		return nil
+	}
+
+	if loop <= 0 || loop > 1000 {
+		return fmt.Errorf("'loop' flag value must be between 1 and 1000")
+	}
+
+	return nil
 }
