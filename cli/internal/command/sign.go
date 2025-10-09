@@ -81,14 +81,14 @@ func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, fileP
 		for {
 			select {
 			case <-c:
-				command.logger.Printf("Received SIGTERM singal\n")
+				command.logger.Printf("Received SIGTERM signal\n")
 				return nil
 			default:
-				time.Sleep(toSleep)
-				
 				if err := command.signCertificate(ctx, payload, flagEncoding); err != nil {
 					return err
 				}
+
+				time.Sleep(toSleep)
 			}
 		}
 	} else {
@@ -105,7 +105,7 @@ func (command *Sign) signCertificate(ctx context.Context, payload cryptobrokercl
 	if strings.ToLower(flagEncoding) == "b64" {
 		encodingOpt = cryptobrokerclientgo.WithBase64Encoding()
 	}
-	
+
 	responseBody, err := command.cryptoBrokerLibrary.SignCertificate(ctx, payload, encodingOpt)
 	if err != nil {
 		return fmt.Errorf("failed to obtain signed certificate through CryptoBroker library, err: %w", err)

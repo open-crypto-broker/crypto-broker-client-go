@@ -3,10 +3,10 @@ package command
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"fmt"
 	"syscall"
 	"time"
 
@@ -58,13 +58,14 @@ func (command *Hash) Run(ctx context.Context, input []byte, flagProfile string, 
 		for {
 			select {
 			case <-c:
-				command.logger.Printf("Received SIGTERM singal\n")
+				command.logger.Printf("Received SIGTERM signal\n")
 				return nil
 			default:
-				time.Sleep(toSleep)
 				if err := command.hashBytes(ctx, payload); err != nil {
 					return err
 				}
+
+				time.Sleep(toSleep)
 			}
 		}
 	} else {
