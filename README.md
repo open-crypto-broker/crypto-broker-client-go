@@ -143,6 +143,7 @@ task test-hash
 # or
 task test-sign
 ```
+
 To run benchmarks, run
 
 ```shell
