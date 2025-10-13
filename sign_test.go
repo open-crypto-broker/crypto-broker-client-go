@@ -249,11 +249,11 @@ G5MLQWA=
 		}
 		cert, err := os.ReadFile("../crypto-broker-deployment/testing/certificates/test-ca/root-CA-ecdsa.pem")
 		if err != nil {
-			b.Fatalf("could not read certificate, err: %s", err.Error())
+			b.Fatalf("could not read CA certificate, err: %s", err.Error())
 		}
 		csr, err := os.ReadFile("../crypto-broker-deployment/testing/certificates/test-csr/test-client.csr")
 		if err != nil {
-			b.Fatalf("could not read certificate, err: %s", err.Error())
+			b.Fatalf("could not read CSR, err: %s", err.Error())
 		}
 
 		b.RunParallel(func(pb *testing.PB) {
