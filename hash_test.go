@@ -5,6 +5,7 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 	"github.com/stretchr/testify/mock"
@@ -116,4 +117,47 @@ func TestLibrary_HashData(t *testing.T) {
 			}
 		})
 	}
+}
+
+func BenchmarkHashData(b *testing.B) {
+	ctx, cancel := context.WithTimeout(b.Context(), 10*time.Second)
+	defer cancel()
+	lib, err := NewLibrary(ctx)
+	if err != nil {
+		b.Fatalf("could not instantiate library, err: %s", err.Error())
+	}
+
+	b.Run("HashData, profile Default, synchronously", func(b *testing.B) {
+		for b.Loop() {
+			_, err := lib.HashData(ctx, HashDataPayload{
+				Profile: "Default",
+				Input:   []byte("Hello world"),
+			})
+			if err != nil {
+				b.Errorf("HashData returned non-nil err: %s", err)
+			}
+		}
+
+	})
+}
+
+func BenchmarkHashDataParallel(b *testing.B) {
+	b.RunParallel(func(p *testing.PB) {
+		ctx, cancel := context.WithTimeout(b.Context(), 10*time.Second)
+		defer cancel()
+		lib, err := NewLibrary(ctx)
+		if err != nil {
+			b.Fatalf("could not instantiate library, err: %s", err.Error())
+		}
+
+		for p.Next() {
+			_, err := lib.HashData(ctx, HashDataPayload{
+				Profile: "Default",
+				Input:   []byte("Hello world"),
+			})
+			if err != nil {
+				b.Errorf("HashData returned non-nil err: %s", err)
+			}
+		}
+	})
 }

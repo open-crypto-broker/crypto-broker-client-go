@@ -3,7 +3,6 @@ package cryptobrokerclientgo
 import (
 	"context"
 	"testing"
-	"time"
 )
 
 func TestNewLibrary(t *testing.T) {
@@ -15,7 +14,9 @@ func TestNewLibrary(t *testing.T) {
 		{
 			name: "NewLibrary() fails if it cannot connect to server in context window",
 			ctxGenerator: func() (context.Context, context.CancelFunc) {
-				return context.WithTimeout(context.Background(), 1*time.Second)
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel() // manually cancel context so that provided context is already done
+				return ctx, cancel
 			},
 			wantErr: true,
 		},
