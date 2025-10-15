@@ -108,9 +108,9 @@ tasks:
     deps: [format, lint]
     dir: ./cli
     cmds:
-      - go build -o ./bin/go-client-cli cmd/client-cli/client-cli.go
+      - go build -o ./bin/go-client-cli main.go
     sources:
-      - cmd/client-cli/client-cli.go
+      - main.go
       - internal/**/*.go
       - ./*.go
       - go.mod
@@ -142,13 +142,13 @@ tasks:
     deps: [build]
     desc: "Test hashing command with Default profile"
     cmds:
-      - ./cli/bin/go-client-cli --profile=Default hash "Hello"
+      - ./cli/bin/go-client-cli hash "Hello" --profile=Default
 
   test-sign:
     deps: [build]
     desc: "Test certificate signing command with Default profile"
     cmds:
-      - ./cli/bin/go-client-cli --profile=Default sign ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/end-entity.csr ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/ca_cert.pem ../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/private_key.pem
+      - ./cli/bin/go-client-cli sign --profile=Default --csr=../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/end-entity.csr --caCert=../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/ca_cert.pem --caKey=../crypto-broker-deployment/deployments/k8s/kube-broker/files/certificates/private_key.pem
 
   run-benchmarks:
     desc: "Command runs benchmarks. For this to work, you need to have the deployment repository in the same parent directory as this repository."

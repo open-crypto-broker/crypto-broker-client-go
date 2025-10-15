@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	cryptobrokerclientgo "github.com/open-crypto-broker/crypto-broker-client-go"
+	"test-app/internal/constant"
 )
 
 type Sign struct {
@@ -22,17 +23,17 @@ type Sign struct {
 }
 
 // InitSign initializes sign command. This may panic in case of failure.
-func InitSign(ctx context.Context, logger *log.Logger) *Sign {
+func NewSign(ctx context.Context, logger *log.Logger) (*Sign, error) {
 	lib, err := cryptobrokerclientgo.NewLibrary(ctx)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return &Sign{logger: logger, cryptoBrokerLibrary: lib}
+	return &Sign{logger: logger, cryptoBrokerLibrary: lib}, nil
 }
 
 // Run executes command logic.
-func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, filePathSigningKey, flagProfile, flagEncoding, flagSubject string, flagLoop int64) error {
+func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, filePathSigningKey, flagProfile, flagEncoding, flagSubject string, flagLoop int) error {
 	defer command.gracefulShutdown()
 
 	rawContentCSR, err := command.readFileBytes(filePathCSR)
@@ -72,10 +73,10 @@ func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, fileP
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	if flagLoop >= 0 && flagLoop <= 1000 {
+	if flagLoop >= constant.MinLoopFlagValue && flagLoop <= constant.MaxLoopFlagValue {
 		toSleep, err := time.ParseDuration(fmt.Sprintf("%dms", flagLoop))
 		if err != nil {
-			panic(err)
+			return fmt.Errorf("could not parse duration, err: %w", err)
 		}
 
 		for {
@@ -102,7 +103,7 @@ func (command *Sign) Run(ctx context.Context, filePathCSR, filePathCACert, fileP
 func (command *Sign) signCertificate(ctx context.Context, payload cryptobrokerclientgo.SignCertificatePayload, flagEncoding string) error {
 	timestampSignStart := time.Now()
 	encodingOpt := cryptobrokerclientgo.WithPEMEncoding()
-	if strings.ToLower(flagEncoding) == "b64" {
+	if strings.ToLower(flagEncoding) == constant.EncodingB64 {
 		encodingOpt = cryptobrokerclientgo.WithBase64Encoding()
 	}
 
