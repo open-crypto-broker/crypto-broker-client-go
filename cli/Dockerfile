@@ -13,7 +13,7 @@ RUN  go mod download
 COPY . .
 
 WORKDIR /app/cli
-RUN go build -o app ./cmd/client-cli
+RUN go build -o app main.go
 
 ## Deploy
 FROM alpine

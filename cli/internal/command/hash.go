@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	cryptobrokerclientgo "github.com/open-crypto-broker/crypto-broker-client-go"
+	"test-app/internal/constant"
 )
 
 // Hash represents command that repeatily sends hash request to crypto broker and displays its response
@@ -21,18 +22,18 @@ type Hash struct {
 	cryptoBrokerLibrary *cryptobrokerclientgo.Library
 }
 
-// InitHash initializes hash command. This may panic in case of failure.
-func InitHash(ctx context.Context, logger *log.Logger) *Hash {
+// NewHash initializes hash command
+func NewHash(ctx context.Context, logger *log.Logger) (*Hash, error) {
 	lib, err := cryptobrokerclientgo.NewLibrary(ctx)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return &Hash{logger: logger, cryptoBrokerLibrary: lib}
+	return &Hash{logger: logger, cryptoBrokerLibrary: lib}, nil
 }
 
 // Run executes command logic.
-func (command *Hash) Run(ctx context.Context, input []byte, flagProfile string, flagLoop int64) error {
+func (command *Hash) Run(ctx context.Context, input []byte, flagProfile string, flagLoop int) error {
 	defer command.gracefulShutdown()
 
 	payload := cryptobrokerclientgo.HashDataPayload{
@@ -49,7 +50,7 @@ func (command *Hash) Run(ctx context.Context, input []byte, flagProfile string, 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	if flagLoop >= 0 && flagLoop <= 1000 {
+	if flagLoop >= constant.MinLoopFlagValue && flagLoop <= constant.MaxLoopFlagValue {
 		toSleep, err := time.ParseDuration(fmt.Sprintf("%dms", flagLoop))
 		if err != nil {
 			panic(err)
