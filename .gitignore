@@ -33,5 +33,5 @@ go.work.sum
 *.vsix
 
 # ignore binary files, but keep the folder structure
-cli/bin/**
-!cli/bin
+# cli/bin/**
+# !cli/bin
