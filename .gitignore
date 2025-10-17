@@ -35,3 +35,6 @@ go.work.sum
 # ignore binary files, but keep the folder structure
 cli/bin/**
 !cli/bin
+
+# ignore temporary test folder
+tmp-tests/
