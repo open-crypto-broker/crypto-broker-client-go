@@ -144,11 +144,13 @@ task test-hash
 task test-sign
 ```
 
-To run benchmarks, run
+To run benchmarks, invoke
 
 ```shell
 task run-benchmarks
 ```
+
+More info on benchmarks can be found in [testing](https://pkg.go.dev/testing@go1.25.3#hdr-Benchmarks) pkg. For detailed description of bench output see [proposal](https://go.googlesource.com/proposal/+/master/design/14313-benchmark-format.md).
 
 For the sign command and some of benchmarks, you need to have the [deployment repository](https://github.com/open-crypto-broker/crypto-broker-deployment) in the same parent directory as this repository. Check the command definitions in the `Taskfile` file to run your own custom commands.
 
