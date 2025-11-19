@@ -72,7 +72,7 @@ This section covers how to contribute to the project and develop it further.
 
 ### Pre-requisites
 
-A version of [Golang](https://go.dev/doc/install) > 1.24 installed on your local machine is required in order to run it locally from terminal. For building the Docker image, you need to have Docker/Docker Desktop or any other alternative (e.g. Podman) installed.
+A version of [Golang](https://go.dev/doc/install) > 1.24 installed on your local machine is required in order to work smoothly with library.
 
 For running the commands using the `Taskfile` tool, you need to have Taskfile installed. Please check the documentation on [how to install Taskfile](https://taskfile.dev/installation/). If you don't have Taskfile support, you can directly use the commands specified in the Taskfile on your local terminal, provided you meet the requirements.
 
@@ -92,18 +92,7 @@ Installation of the necessary tools is supported automatically for Linux and mac
 task tools
 ```
 
-### Building
-
-#### Compiling the Go binaries
-
-For testing the application, you can build the local CLI with the following command:
-
-```shell
-task build
-```
-
-This will also save a checksum of all the file `sources` in the Taskfile cache `.task`.
-This means that, if no new changes are done, re-running the task will not build the app again.
+### Protobuf
 
 This repository uses a submodule for the proto files in `/protobuf` directory.
 
@@ -112,18 +101,6 @@ To reload the `/protobuf` files to the latest `main` commit and recompile them, 
 ```shell
 task proto
 ```
-
-#### Building the Docker image
-
-For building the image for local use, you can use the command:
-
-```shell
-task build-docker [TAG=opt]
-```
-
-The TAG argument is optional and will apply a custom image tag to the built images. If not specified, it defaults to `latest`. This will create a local image tagged as `server_app:TAG`, which will be saved in your local Docker repository. If you want to modify or append args to the build command, please refer to the one from the Taskfile.
-
-Note that, by default, Taskfile will import a local `.env` file located in the directory. This is optional and can be used to push images to private repositories or injecting variables in the system.
 
 ### Testing
 
@@ -134,14 +111,6 @@ If you want to additionally invoke the local pipeline for code formatting, you c
 
 ```shell
 task ci
-```
-
-You can do a local end2end testing of the application yourself with the provided CLI. To run the CLI, you first need to have the [Crypto Broker server](https://github.com/open-crypto-broker/crypto-broker-server/) running in your Unix localhost environment. Once done, you can run one of the following in another terminal:
-
-```shell
-task test-hash
-# or
-task test-sign
 ```
 
 To run benchmarks, invoke
