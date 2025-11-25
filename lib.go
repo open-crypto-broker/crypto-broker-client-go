@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // defaultSocketPath defines default full OS path to socket file.
@@ -25,8 +26,9 @@ var (
 
 // Library implements convenient facade to work with crypto broker
 type Library struct {
-	client protobuf.CryptoBrokerClient
-	conn   *grpc.ClientConn
+	client       protobuf.CryptoBrokerClient
+	healthClient grpc_health_v1.HealthClient
+	conn         *grpc.ClientConn
 }
 
 // NewLibrary returns pointer to GrpcLibrary instance.
@@ -43,7 +45,11 @@ func NewLibrary(ctx context.Context) (*Library, error) {
 		return nil, fmt.Errorf("could not create gRPC client, err: %w", err)
 	}
 
-	lib := &Library{client: protobuf.NewCryptoBrokerClient(conn), conn: conn}
+	lib := &Library{
+		client:       protobuf.NewCryptoBrokerClient(conn),
+		healthClient: grpc_health_v1.NewHealthClient(conn),
+		conn:         conn,
+	}
 	ctxTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 	if err = lib.verifyConnection(ctxTimeout); err != nil {
@@ -85,4 +91,31 @@ func (lib *Library) verifyConnection(ctx context.Context) error {
 
 		state = lib.conn.GetState()
 	}
+}
+
+// HealthCheckResponse represents the server health status
+type HealthCheckResponse struct {
+	Status string
+}
+
+// HealthCheck checks the health status of the server
+func (lib *Library) HealthCheck(ctx context.Context) (*HealthCheckResponse, error) {
+	resp, err := lib.healthClient.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("health check failed: %w", err)
+	}
+
+	var status string
+	switch resp.Status {
+	case grpc_health_v1.HealthCheckResponse_SERVING:
+		status = "SERVING"
+	case grpc_health_v1.HealthCheckResponse_NOT_SERVING:
+		status = "NOT_SERVING"
+	case grpc_health_v1.HealthCheckResponse_UNKNOWN:
+		status = "UNKNOWN"
+	default:
+		status = "UNKNOWN"
+	}
+
+	return &HealthCheckResponse{Status: status}, nil
 }
