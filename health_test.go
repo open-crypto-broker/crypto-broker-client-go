@@ -31,7 +31,7 @@ func (m *mockedHealthClient) List(ctx context.Context, in *grpc_health_v1.Health
 	return args.Get(0).(*grpc_health_v1.HealthListResponse), args.Error(1)
 }
 
-func TestLibrary_HealthCheck(t *testing.T) {
+func TestLibrary_HealthData(t *testing.T) {
 	mockedClient := &mockedHealthClient{}
 
 	type mockFunc func()
@@ -47,11 +47,11 @@ func TestLibrary_HealthCheck(t *testing.T) {
 		fields   fields
 		mockFunc mockFunc
 		args     args
-		want     *HealthCheckResponse
+		want     *HealthDataResponse
 		wantErr  bool
 	}{
 		{
-			name: "HealthCheck() succeeds when server returns SERVING",
+			name: "HealthData() succeeds when server returns SERVING",
 			fields: fields{
 				healthClient: mockedClient,
 				conn:         &grpc.ClientConn{},
@@ -66,11 +66,11 @@ func TestLibrary_HealthCheck(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 			},
-			want:    &HealthCheckResponse{Status: "SERVING"},
+			want:    &HealthDataResponse{Status: "SERVING"},
 			wantErr: false,
 		},
 		{
-			name: "HealthCheck() succeeds when server returns NOT_SERVING",
+			name: "HealthData() succeeds when server returns NOT_SERVING",
 			fields: fields{
 				healthClient: mockedClient,
 				conn:         &grpc.ClientConn{},
@@ -85,11 +85,11 @@ func TestLibrary_HealthCheck(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 			},
-			want:    &HealthCheckResponse{Status: "NOT_SERVING"},
+			want:    &HealthDataResponse{Status: "NOT_SERVING"},
 			wantErr: false,
 		},
 		{
-			name: "HealthCheck() succeeds when server returns UNKNOWN",
+			name: "HealthData() succeeds when server returns UNKNOWN",
 			fields: fields{
 				healthClient: mockedClient,
 				conn:         &grpc.ClientConn{},
@@ -104,11 +104,11 @@ func TestLibrary_HealthCheck(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 			},
-			want:    &HealthCheckResponse{Status: "UNKNOWN"},
+			want:    &HealthDataResponse{Status: "UNKNOWN"},
 			wantErr: false,
 		},
 		{
-			name: "HealthCheck() fails when client returns non-nil error",
+			name: "HealthData() fails when client returns non-nil error",
 			fields: fields{
 				healthClient: mockedClient,
 				conn:         &grpc.ClientConn{},
@@ -133,19 +133,19 @@ func TestLibrary_HealthCheck(t *testing.T) {
 
 			tt.mockFunc()
 
-			got, err := lib.HealthCheck(tt.args.ctx)
+			got, err := lib.HealthData(tt.args.ctx)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Library.HealthCheck() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Library.HealthData() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Library.HealthCheck() = %v, want %v", got, tt.want)
+				t.Errorf("Library.HealthData() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func BenchmarkHealthCheck(b *testing.B) {
+func BenchmarkHealthData(b *testing.B) {
 	ctx, cancel := context.WithTimeout(b.Context(), 10*time.Second)
 	defer cancel()
 	lib, err := NewLibrary(ctx)
@@ -153,17 +153,17 @@ func BenchmarkHealthCheck(b *testing.B) {
 		b.Fatalf("could not instantiate library, err: %s", err.Error())
 	}
 
-	b.Run("HealthCheck, synchronously", func(b *testing.B) {
+	b.Run("HealthData, synchronously", func(b *testing.B) {
 		for b.Loop() {
-			_, err := lib.HealthCheck(ctx)
+			_, err := lib.HealthData(ctx)
 			if err != nil {
-				b.Errorf("HealthCheck returned non-nil err: %s", err)
+				b.Errorf("HealthData returned non-nil err: %s", err)
 			}
 		}
 	})
 }
 
-func BenchmarkHealthCheckParallel(b *testing.B) {
+func BenchmarkHealthDataParallel(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		ctx, cancel := context.WithTimeout(b.Context(), 10*time.Second)
 		defer cancel()
@@ -173,17 +173,17 @@ func BenchmarkHealthCheckParallel(b *testing.B) {
 		}
 
 		for p.Next() {
-			_, err := lib.HealthCheck(ctx)
+			_, err := lib.HealthData(ctx)
 			if err != nil {
-				b.Errorf("HealthCheck returned non-nil err: %s", err)
+				b.Errorf("HealthData returned non-nil err: %s", err)
 			}
 		}
 	})
 }
 
-// TestLibrary_HealthCheck_E2E tests HealthCheck against a real server
+// TestLibrary_HealthData_E2E tests HealthData against a real server
 // This test requires the server to be running (e.g., via `task run`)
-func TestLibrary_HealthCheck_E2E(t *testing.T) {
+func TestLibrary_HealthData_E2E(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -194,19 +194,19 @@ func TestLibrary_HealthCheck_E2E(t *testing.T) {
 	}
 	defer lib.Close()
 
-	response, err := lib.HealthCheck(ctx)
+	response, err := lib.HealthData(ctx)
 	if err != nil {
-		t.Errorf("HealthCheck() error = %v", err)
+		t.Errorf("HealthData() error = %v", err)
 		return
 	}
 
 	if response == nil {
-		t.Error("HealthCheck() returned nil response")
+		t.Error("HealthData() returned nil response")
 		return
 	}
 
 	if response.Status != "SERVING" && response.Status != "NOT_SERVING" && response.Status != "UNKNOWN" {
-		t.Errorf("HealthCheck() returned unexpected status: %s", response.Status)
+		t.Errorf("HealthData() returned unexpected status: %s", response.Status)
 	}
 
 	t.Logf("✅ Server health status: %s", response.Status)

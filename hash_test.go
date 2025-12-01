@@ -28,12 +28,18 @@ func (m *mockedCryptoBrokerClient) Sign(ctx context.Context, in *protobuf.SignRe
 	return args.Get(0).(*protobuf.SignResponse), args.Error(1)
 }
 
+func (m *mockedCryptoBrokerClient) Benchmark(ctx context.Context, in *protobuf.BenchmarkRequest, opts ...grpc.CallOption) (*protobuf.BenchmarkResponse, error) {
+	args := m.Called(ctx, in)
+
+	return args.Get(0).(*protobuf.BenchmarkResponse), args.Error(1)
+}
+
 func TestLibrary_HashData(t *testing.T) {
 	mockedClient := &mockedCryptoBrokerClient{}
 
 	type mockFunc func()
 	type fields struct {
-		client protobuf.CryptoBrokerClient
+		client protobuf.CryptoGrpcClient
 		conn   *grpc.ClientConn
 	}
 	type args struct {
