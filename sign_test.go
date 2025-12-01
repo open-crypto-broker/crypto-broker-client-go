@@ -18,7 +18,7 @@ func TestLibrary_SignCertificate(t *testing.T) {
 
 	type mockFunc func()
 	type fields struct {
-		client protobuf.CryptoBrokerClient
+		client protobuf.CryptoGrpcClient
 		conn   *grpc.ClientConn
 	}
 	type args struct {
