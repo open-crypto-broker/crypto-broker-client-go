@@ -50,13 +50,11 @@ type SignCertificatePayload struct {
 	// CACert CA Certificate's raw bytes in PEM format
 	CACert []byte
 
-	// Optional fileds
+	// (Optional) ValidNotBefore timestamp for notBefore validity field
+	ValidNotBefore *time.Time
 
-	// (Optional) ValidNotBeforeOffset time offset for notBefore validity field
-	ValidNotBeforeOffset *string
-
-	// (Optional) ValidNotAfterOffset time offset for notAfter validity field
-	ValidNotAfterOffset *string
+	// (Optional) ValidNotAfter timestamp for notAfter validity field
+	ValidNotAfter *time.Time
 
 	// (Optional) Subject in pkix.Name String format to override the one from the CSR
 	Subject *string
@@ -95,14 +93,28 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 		Csr:                   string(payload.CSR),
 		CaPrivateKey:          string(payload.CAPrivateKey),
 		CaCert:                string(payload.CACert),
-		ValidNotBeforeOffset:  payload.ValidNotBeforeOffset,
-		ValidNotAfterOffset:   payload.ValidNotAfterOffset,
 		Subject:               payload.Subject,
 		CrlDistributionPoints: payload.CrlDistributionPoint,
 		Metadata: &protobuf.Metadata{
 			Id:        payload.Metadata.Id,
 			CreatedAt: payload.Metadata.CreatedAt,
 		},
+	}
+
+	if payload.ValidNotBefore != nil {
+		if payload.ValidNotBefore.IsZero() {
+			return nil, fmt.Errorf("validNotBefore is zero")
+		}
+
+		req.ValidNotBefore = toPointerUint64(payload.ValidNotBefore.UTC().Unix())
+	}
+
+	if payload.ValidNotAfter != nil {
+		if payload.ValidNotAfter.IsZero() {
+			return nil, fmt.Errorf("validNotAfter is zero")
+		}
+
+		req.ValidNotAfter = toPointerUint64(payload.ValidNotAfter.UTC().Unix())
 	}
 
 	resp, err := lib.client.Sign(ctx, req)
@@ -131,4 +143,9 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 // signCertificateDefaultOptions returns default options for signing certificate method.
 func (lib *Library) signCertificateDefaultOptions() []func(*optionsSignCertificate) {
 	return []func(*optionsSignCertificate){WithPEMEncoding()}
+}
+
+func toPointerUint64(value int64) *uint64 {
+	v := uint64(value)
+	return &v
 }
