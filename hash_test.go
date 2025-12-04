@@ -12,30 +12,30 @@ import (
 	"google.golang.org/grpc"
 )
 
-type mockedCryptoBrokerClient struct {
+type mockedGRPCClient struct {
 	mock.Mock
 }
 
-func (m *mockedCryptoBrokerClient) Hash(ctx context.Context, in *protobuf.HashRequest, opts ...grpc.CallOption) (*protobuf.HashResponse, error) {
+func (m *mockedGRPCClient) Hash(ctx context.Context, in *protobuf.HashRequest, opts ...grpc.CallOption) (*protobuf.HashResponse, error) {
 	args := m.Called(ctx, in)
 
 	return args.Get(0).(*protobuf.HashResponse), args.Error(1)
 }
 
-func (m *mockedCryptoBrokerClient) Sign(ctx context.Context, in *protobuf.SignRequest, opts ...grpc.CallOption) (*protobuf.SignResponse, error) {
+func (m *mockedGRPCClient) Sign(ctx context.Context, in *protobuf.SignRequest, opts ...grpc.CallOption) (*protobuf.SignResponse, error) {
 	args := m.Called(ctx, in)
 
 	return args.Get(0).(*protobuf.SignResponse), args.Error(1)
 }
 
-func (m *mockedCryptoBrokerClient) Benchmark(ctx context.Context, in *protobuf.BenchmarkRequest, opts ...grpc.CallOption) (*protobuf.BenchmarkResponse, error) {
+func (m *mockedGRPCClient) Benchmark(ctx context.Context, in *protobuf.BenchmarkRequest, opts ...grpc.CallOption) (*protobuf.BenchmarkResponse, error) {
 	args := m.Called(ctx, in)
 
 	return args.Get(0).(*protobuf.BenchmarkResponse), args.Error(1)
 }
 
 func TestLibrary_HashData(t *testing.T) {
-	mockedClient := &mockedCryptoBrokerClient{}
+	mockedClient := &mockedGRPCClient{}
 
 	type mockFunc func()
 	type fields struct {

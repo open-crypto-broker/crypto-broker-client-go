@@ -3,7 +3,6 @@ package cryptobrokerclientgo
 import (
 	"context"
 	"errors"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -14,7 +13,9 @@ import (
 )
 
 func TestLibrary_SignCertificate(t *testing.T) {
-	mockedClient := &mockedCryptoBrokerClient{}
+	mockedClient := &mockedGRPCClient{}
+	zeroTime := time.Time{}
+	currentTime := time.Now()
 
 	type mockFunc func()
 	type fields struct {
@@ -108,6 +109,44 @@ func TestLibrary_SignCertificate(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "SignCertificate() fails when user provides invalid NotBefore timestamp",
+			fields: fields{
+				client: mockedClient,
+				conn:   &grpc.ClientConn{},
+			},
+			mockFunc: func() {
+
+			},
+			args: args{
+				ctx: context.TODO(),
+				payload: SignCertificatePayload{
+					ValidNotBefore: &zeroTime,
+					ValidNotAfter:  &currentTime,
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "SignCertificate() fails when user provides invalid NotAfter timestamp",
+			fields: fields{
+				client: mockedClient,
+				conn:   &grpc.ClientConn{},
+			},
+			mockFunc: func() {
+
+			},
+			args: args{
+				ctx: context.TODO(),
+				payload: SignCertificatePayload{
+					ValidNotBefore: &currentTime,
+					ValidNotAfter:  &zeroTime,
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -186,7 +225,6 @@ G5MLQWA=
 }
 
 func BenchmarkSignCertificateParallel(b *testing.B) {
-
 	b.Run("SignCertificate, profile Default, parallel, fixed data", func(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
 			ctx, cancel := context.WithTimeout(b.Context(), 10*time.Second)
@@ -241,41 +279,4 @@ G5MLQWA=
 			}
 		})
 	})
-
-	b.Run("SignCertificate, profile Default, parallel, referenced data", func(b *testing.B) {
-		pk, err := os.ReadFile("../crypto-broker-deployment/testing/certificates/test-ca/root-CA-ecdsa-private-key.pem")
-		if err != nil {
-			b.Fatalf("could not read private key, err: %s", err.Error())
-		}
-		cert, err := os.ReadFile("../crypto-broker-deployment/testing/certificates/test-ca/root-CA-ecdsa.pem")
-		if err != nil {
-			b.Fatalf("could not read CA certificate, err: %s", err.Error())
-		}
-		csr, err := os.ReadFile("../crypto-broker-deployment/testing/certificates/test-csr/test-client.csr")
-		if err != nil {
-			b.Fatalf("could not read CSR, err: %s", err.Error())
-		}
-
-		b.RunParallel(func(pb *testing.PB) {
-			ctx, cancel := context.WithTimeout(b.Context(), 10*time.Second)
-			defer cancel()
-			lib, err := NewLibrary(ctx)
-			if err != nil {
-				b.Fatalf("could not instantiate library, err: %s", err.Error())
-			}
-
-			for pb.Next() {
-				_, err := lib.SignCertificate(ctx, SignCertificatePayload{
-					Profile:      "Default",
-					CSR:          csr,
-					CAPrivateKey: pk,
-					CACert:       cert,
-				})
-				if err != nil {
-					b.Errorf("SignCertificate returned non-nil err: %s", err)
-				}
-			}
-		})
-	})
-
 }
