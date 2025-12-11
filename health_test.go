@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"slices"
 )
 
 type mockedHealthClient struct {
@@ -48,7 +49,6 @@ func TestLibrary_HealthData(t *testing.T) {
 		mockFunc mockFunc
 		args     args
 		want     *HealthDataResponse
-		wantErr  bool
 	}{
 		{
 			name: "HealthData() succeeds when server returns SERVING",
@@ -66,8 +66,7 @@ func TestLibrary_HealthData(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 			},
-			want:    &HealthDataResponse{Status: "SERVING"},
-			wantErr: false,
+			want: &HealthDataResponse{Status: StatusServing},
 		},
 		{
 			name: "HealthData() succeeds when server returns NOT_SERVING",
@@ -85,8 +84,7 @@ func TestLibrary_HealthData(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 			},
-			want:    &HealthDataResponse{Status: "NOT_SERVING"},
-			wantErr: false,
+			want: &HealthDataResponse{Status: StatusNotServing},
 		},
 		{
 			name: "HealthData() succeeds when server returns UNKNOWN",
@@ -104,8 +102,7 @@ func TestLibrary_HealthData(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 			},
-			want:    &HealthDataResponse{Status: "UNKNOWN"},
-			wantErr: false,
+			want: &HealthDataResponse{Status: StatusUnknown},
 		},
 		{
 			name: "HealthData() fails when client returns non-nil error",
@@ -120,8 +117,7 @@ func TestLibrary_HealthData(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 			},
-			want:    nil,
-			wantErr: true,
+			want: &HealthDataResponse{Status: StatusUnknown},
 		},
 	}
 	for _, tt := range tests {
@@ -133,11 +129,7 @@ func TestLibrary_HealthData(t *testing.T) {
 
 			tt.mockFunc()
 
-			got, err := lib.HealthData(tt.args.ctx)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Library.HealthData() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			got := lib.HealthData(tt.args.ctx)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Library.HealthData() = %v, want %v", got, tt.want)
 			}
@@ -155,9 +147,10 @@ func BenchmarkHealthData(b *testing.B) {
 
 	b.Run("HealthData, synchronously", func(b *testing.B) {
 		for b.Loop() {
-			_, err := lib.HealthData(ctx)
-			if err != nil {
-				b.Errorf("HealthData returned non-nil err: %s", err)
+			resp := lib.HealthData(ctx)
+			notWantedStatuses := []string{StatusNotServing, StatusUnknown}
+			if slices.Contains(notWantedStatuses, resp.Status) {
+				b.Errorf("response status is one that is not expected, status: %s", resp.Status)
 			}
 		}
 	})
@@ -173,9 +166,10 @@ func BenchmarkHealthDataParallel(b *testing.B) {
 		}
 
 		for p.Next() {
-			_, err := lib.HealthData(ctx)
-			if err != nil {
-				b.Errorf("HealthData returned non-nil err: %s", err)
+			resp := lib.HealthData(ctx)
+			notWantedStatuses := []string{StatusNotServing, StatusUnknown}
+			if slices.Contains(notWantedStatuses, resp.Status) {
+				b.Errorf("response status is one that is not expected, status: %s", resp.Status)
 			}
 		}
 	})
@@ -194,18 +188,15 @@ func TestLibrary_HealthData_E2E(t *testing.T) {
 	}
 	defer lib.Close()
 
-	response, err := lib.HealthData(ctx)
-	if err != nil {
-		t.Errorf("HealthData() error = %v", err)
-		return
-	}
-
+	response := lib.HealthData(ctx)
 	if response == nil {
 		t.Error("HealthData() returned nil response")
+
 		return
 	}
 
-	if response.Status != "SERVING" && response.Status != "NOT_SERVING" && response.Status != "UNKNOWN" {
+	validStatuses := []string{StatusServing, StatusNotServing, StatusUnknown}
+	if !slices.Contains(validStatuses, response.Status) {
 		t.Errorf("HealthData() returned unexpected status: %s", response.Status)
 	}
 
