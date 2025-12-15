@@ -34,6 +34,11 @@ type Library struct {
 // NewLibrary returns pointer to GrpcLibrary instance.
 // Internally it establishes connection to the gRPC server and verifies it or returns non-nil error if any
 func NewLibrary(ctx context.Context) (*Library, error) {
+	return NewLibraryWithVerify(ctx, true)
+}
+
+// NewLibraryWithVerify creates a library instance with optional connection verification
+func NewLibraryWithVerify(ctx context.Context, verify bool) (*Library, error) {
 	// Create a custom dialer for Unix domain sockets
 	dialer := func(ctx context.Context, addr string) (net.Conn, error) {
 		return net.Dial("unix", defaultSocketPath)
@@ -50,10 +55,13 @@ func NewLibrary(ctx context.Context) (*Library, error) {
 		healthClient: grpc_health_v1.NewHealthClient(conn),
 		conn:         conn,
 	}
-	ctxTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
-	defer cancel()
-	if err = lib.verifyConnection(ctxTimeout); err != nil {
-		return nil, fmt.Errorf("could not establish connection to gRPC server, err: %w", err)
+
+	if verify {
+		ctxTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+		defer cancel()
+		if err = lib.verifyConnection(ctxTimeout); err != nil {
+			return nil, fmt.Errorf("could not establish connection to gRPC server, err: %w", err)
+		}
 	}
 
 	return lib, nil

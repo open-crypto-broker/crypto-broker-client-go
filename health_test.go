@@ -129,7 +129,9 @@ func TestLibrary_HealthData(t *testing.T) {
 
 			tt.mockFunc()
 
-			got := lib.HealthData(tt.args.ctx)
+			// Use single retry for fast unit tests
+			opts := HealthCheckOptions{MaxRetries: 1, RetryDelay: 0, Logger: nil}
+			got := lib.HealthDataWithOptions(tt.args.ctx, opts)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Library.HealthData() = %v, want %v", got, tt.want)
 			}
