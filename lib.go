@@ -3,6 +3,7 @@ package cryptobrokerclientgo
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"path/filepath"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 )
 
 // defaultSocketPath defines default full OS path to socket file.
@@ -23,6 +25,8 @@ import (
 var (
 	baseDir           = "/tmp"
 	defaultSocketPath = filepath.Join(baseDir, "cryptobroker.sock")
+	// debugHeaders enables logging of gRPC headers for debugging
+	debugHeaders = true
 )
 
 // Library implements convenient facade to work with crypto broker
@@ -40,10 +44,17 @@ func NewLibrary(ctx context.Context) (*Library, error) {
 		return net.Dial("unix", defaultSocketPath)
 	}
 
+	// Create gRPC interceptors
+	var unaryInterceptors []grpc.UnaryClientInterceptor
+	if debugHeaders {
+		unaryInterceptors = append(unaryInterceptors, headerLoggingUnaryClientInterceptor())
+	}
+
 	conn, err := grpc.NewClient("unix://"+defaultSocketPath,
 		grpc.WithContextDialer(dialer),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not create gRPC client, err: %w", err)
@@ -94,5 +105,19 @@ func (lib *Library) verifyConnection(ctx context.Context) error {
 		}
 
 		state = lib.conn.GetState()
+	}
+}
+
+// headerLoggingUnaryClientInterceptor logs outgoing gRPC headers for debugging
+func headerLoggingUnaryClientInterceptor() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		// Extract outgoing metadata from context
+		md, ok := metadata.FromOutgoingContext(ctx)
+		if ok && debugHeaders {
+			log.Printf("CLIENT DEBUG: Outgoing gRPC headers for %s: %v", method, md)
+		}
+
+		// Call the actual method
+		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }

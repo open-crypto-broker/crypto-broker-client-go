@@ -40,10 +40,22 @@ func (lib *Library) BenchmarkData(ctx context.Context, payload BenchmarkDataPayl
 		}
 	}
 
+	// Convert client TraceContext to protobuf TraceContext
+	var protoTraceContext *protobuf.TraceContext
+	if payload.Metadata.TraceContext != nil {
+		protoTraceContext = &protobuf.TraceContext{
+			TraceId:    payload.Metadata.TraceContext.TraceId,
+			SpanId:     payload.Metadata.TraceContext.SpanId,
+			TraceFlags: payload.Metadata.TraceContext.TraceFlags,
+			TraceState: payload.Metadata.TraceContext.TraceState,
+		}
+	}
+
 	req := &protobuf.BenchmarkRequest{
 		Metadata: &protobuf.Metadata{
-			Id:        payload.Metadata.Id,
-			CreatedAt: payload.Metadata.CreatedAt,
+			Id:           payload.Metadata.Id,
+			CreatedAt:    payload.Metadata.CreatedAt,
+			TraceContext: protoTraceContext,
 		},
 	}
 

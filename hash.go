@@ -22,9 +22,17 @@ type HashDataPayload struct {
 	Metadata *Metadata
 }
 
+type TraceContext struct {
+	TraceId    string
+	SpanId     string
+	TraceFlags string
+	TraceState string
+}
+
 type Metadata struct {
-	Id        string
-	CreatedAt string
+	Id           string
+	CreatedAt    string
+	TraceContext *TraceContext
 }
 
 // HashData performs logic that results in hashing provided bytes using crypto broker.
@@ -38,12 +46,24 @@ func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*pro
 			CreatedAt: time.Now().UTC().Format(time.RFC3339),
 		}
 	}
+	// Convert client TraceContext to protobuf TraceContext
+	var protoTraceContext *protobuf.TraceContext
+	if payload.Metadata.TraceContext != nil {
+		protoTraceContext = &protobuf.TraceContext{
+			TraceId:    payload.Metadata.TraceContext.TraceId,
+			SpanId:     payload.Metadata.TraceContext.SpanId,
+			TraceFlags: payload.Metadata.TraceContext.TraceFlags,
+			TraceState: payload.Metadata.TraceContext.TraceState,
+		}
+	}
+
 	req := &protobuf.HashRequest{
 		Profile: payload.Profile,
 		Input:   payload.Input,
 		Metadata: &protobuf.Metadata{
-			Id:        payload.Metadata.Id,
-			CreatedAt: payload.Metadata.CreatedAt,
+			Id:           payload.Metadata.Id,
+			CreatedAt:    payload.Metadata.CreatedAt,
+			TraceContext: protoTraceContext,
 		},
 	}
 
