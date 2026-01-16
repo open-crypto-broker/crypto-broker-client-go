@@ -34,6 +34,12 @@ func (m *mockedGRPCClient) Benchmark(ctx context.Context, in *protobuf.Benchmark
 	return args.Get(0).(*protobuf.BenchmarkResponse), args.Error(1)
 }
 
+func (m *mockedGRPCClient) FakeEndpoint(ctx context.Context, in *protobuf.FakeEndpointRequest, opts ...grpc.CallOption) (*protobuf.FakeEndpointResponse, error) {
+	args := m.Called(ctx, in)
+
+	return args.Get(0).(*protobuf.FakeEndpointResponse), args.Error(1)
+}
+
 func TestLibrary_HashData(t *testing.T) {
 	mockedClient := &mockedGRPCClient{}
 
