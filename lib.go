@@ -25,6 +25,21 @@ var (
 	defaultSocketPath = filepath.Join(baseDir, "cryptobroker.sock")
 )
 
+// retryPolicy defines the gRPC retry configuration
+const retryPolicy = `{
+	"methodConfig": [{
+		"name": [{"service": ""}],
+		"waitForReady": true,
+		"retryPolicy": {
+			"maxAttempts": 5,
+			"initialBackoff": "1s",
+			"maxBackoff": "10s",
+			"backoffMultiplier": 2.0,
+			"retryableStatusCodes": ["UNAVAILABLE", "RESOURCE_EXHAUSTED", "ABORTED"]
+		}
+	}]
+}`
+
 // Library implements convenient facade to work with crypto broker
 type Library struct {
 	client       protobuf.CryptoGrpcClient
@@ -44,6 +59,7 @@ func NewLibrary(ctx context.Context) (*Library, error) {
 	conn, err := grpc.NewClient("unix://"+defaultSocketPath,
 		grpc.WithContextDialer(dialer),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(retryPolicy),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
 	)
