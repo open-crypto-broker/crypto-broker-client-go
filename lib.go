@@ -2,6 +2,7 @@ package cryptobrokerclientgo
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"net"
 	"path/filepath"
@@ -25,20 +26,11 @@ var (
 	defaultSocketPath = filepath.Join(baseDir, "cryptobroker.sock")
 )
 
-// retryPolicy defines the gRPC retry configuration
-const retryPolicy = `{
-	"methodConfig": [{
-		"name": [{}],
-		"waitForReady": true,
-		"retryPolicy": {
-			"maxAttempts": 5,
-			"initialBackoff": "1s",
-			"maxBackoff": "10s",
-			"backoffMultiplier": 2.0,
-			"retryableStatusCodes": ["UNAVAILABLE", "UNKNOWN", "ABORTED"]
-		}
-	}]
-}`
+// retryPolicy is embedded from defaultRetryPolicy.json at build time.
+// To customize retry behavior, modify defaultRetryPolicy.json before building.
+//
+//go:embed defaultRetryPolicy.json
+var retryPolicy string
 
 // Library implements convenient facade to work with crypto broker
 type Library struct {

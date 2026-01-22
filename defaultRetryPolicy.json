@@ -1,0 +1,13 @@
+{
+	"methodConfig": [{
+		"name": [{}],
+		"waitForReady": true,
+		"retryPolicy": {
+			"maxAttempts": 5,
+			"initialBackoff": "1s",
+			"maxBackoff": "10s",
+			"backoffMultiplier": 2.0,
+			"retryableStatusCodes": ["UNAVAILABLE", "UNKNOWN", "ABORTED"]
+		}
+	}]
+}
