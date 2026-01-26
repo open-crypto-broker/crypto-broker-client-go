@@ -2,6 +2,7 @@ package cryptobrokerclientgo
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"net"
 	"path/filepath"
@@ -25,6 +26,12 @@ var (
 	defaultSocketPath = filepath.Join(baseDir, "cryptobroker.sock")
 )
 
+// retryPolicy is embedded from defaultRetryPolicy.json at build time.
+// To customize retry behavior, modify defaultRetryPolicy.json before building.
+//
+//go:embed defaultRetryPolicy.json
+var retryPolicy string
+
 // Library implements convenient facade to work with crypto broker
 type Library struct {
 	client       protobuf.CryptoGrpcClient
@@ -44,6 +51,7 @@ func NewLibrary(ctx context.Context) (*Library, error) {
 	conn, err := grpc.NewClient("unix://"+defaultSocketPath,
 		grpc.WithContextDialer(dialer),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(retryPolicy),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
 	)
