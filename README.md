@@ -53,6 +53,7 @@ payload = cryptobrokerclientgo.SignCertificatePayload{
   CSR:          rawContentCSR,
   CAPrivateKey: rawContentSigningKey,
   CACert:       rawContentCACert,
+  CrlDistributionPoint: crlDistributionPoints,
   Subject:      &customSubject,
   Metadata: &cryptobrokerclientgo.Metadata{
     Id:        uuid.New().String(),
