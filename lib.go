@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
@@ -52,7 +51,6 @@ func NewLibrary(ctx context.Context) (*Library, error) {
 		grpc.WithContextDialer(dialer),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultServiceConfig(retryPolicy),
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
 	)
 	if err != nil {
