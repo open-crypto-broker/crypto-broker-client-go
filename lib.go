@@ -21,8 +21,8 @@ import (
 //
 // Please see os.TempDir() doc to see how OS temporary dir is discovered.
 var (
-	baseDir           = "/tmp"
-	defaultSocketPath = filepath.Join(baseDir, "cryptobroker.sock")
+	baseDir           = "/tmp/open-crypto-broker"
+	defaultSocketPath = filepath.Join(baseDir, "crypto-broker-server.sock")
 )
 
 // retryPolicy is embedded from defaultRetryPolicy.json at build time.
