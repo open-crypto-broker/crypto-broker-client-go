@@ -1,6 +1,6 @@
 module github.com/open-crypto-broker/crypto-broker-client-go
 
-go 1.24.2
+go 1.26.1
 
 require (
 	github.com/google/uuid v1.6.0
