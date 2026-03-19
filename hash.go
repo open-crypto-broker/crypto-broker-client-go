@@ -23,10 +23,11 @@ type HashDataPayload struct {
 }
 
 type TraceContext struct {
-	TraceId    string
-	SpanId     string
-	TraceFlags string
-	TraceState string
+	TraceId       string
+	SpanId        string
+	TraceFlags    string
+	TraceState    string
+	CorrelationId string
 }
 
 type Metadata struct {
@@ -50,10 +51,11 @@ func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*pro
 	var protoTraceContext *protobuf.TraceContext
 	if payload.Metadata.TraceContext != nil {
 		protoTraceContext = &protobuf.TraceContext{
-			TraceId:    payload.Metadata.TraceContext.TraceId,
-			SpanId:     payload.Metadata.TraceContext.SpanId,
-			TraceFlags: payload.Metadata.TraceContext.TraceFlags,
-			TraceState: payload.Metadata.TraceContext.TraceState,
+			TraceId:       payload.Metadata.TraceContext.TraceId,
+			SpanId:        payload.Metadata.TraceContext.SpanId,
+			TraceFlags:    payload.Metadata.TraceContext.TraceFlags,
+			TraceState:    payload.Metadata.TraceContext.TraceState,
+			CorrelationId: payload.Metadata.TraceContext.CorrelationId,
 		}
 	}
 
