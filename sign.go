@@ -92,10 +92,11 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 	var protoTraceContext *protobuf.TraceContext
 	if payload.Metadata.TraceContext != nil {
 		protoTraceContext = &protobuf.TraceContext{
-			TraceId:    payload.Metadata.TraceContext.TraceId,
-			SpanId:     payload.Metadata.TraceContext.SpanId,
-			TraceFlags: payload.Metadata.TraceContext.TraceFlags,
-			TraceState: payload.Metadata.TraceContext.TraceState,
+			TraceId:       payload.Metadata.TraceContext.TraceId,
+			SpanId:        payload.Metadata.TraceContext.SpanId,
+			TraceFlags:    payload.Metadata.TraceContext.TraceFlags,
+			TraceState:    payload.Metadata.TraceContext.TraceState,
+			CorrelationId: payload.Metadata.TraceContext.CorrelationId,
 		}
 	}
 
