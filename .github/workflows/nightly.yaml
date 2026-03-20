@@ -1,0 +1,24 @@
+name: Nightly Security Scan
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+
+  workflow_dispatch:
+    inputs:
+      scan_directory:
+        description: "Run SBOM scan on directory"
+        type: boolean
+        default: true
+
+      directory_to_scan:
+        description: "Directory to scan"
+        type: string
+        default: "."
+
+jobs:
+  scan:
+    uses: open-crypto-broker/.github/.github/workflows/security-scan.yaml@main
+    with:
+      scan_directory: ${{ inputs.scan_directory || true }}
+      directory_to_scan: ${{ inputs.directory_to_scan || '.' }}
