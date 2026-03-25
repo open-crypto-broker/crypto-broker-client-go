@@ -60,7 +60,7 @@ type SignCertificatePayload struct {
 	Subject *string
 
 	// (Optional) CRL Point Distribution URL
-	CrlDistributionPoint []string
+	CrlDistributionPoints []string
 
 	// (Optional) Metadata to track the request back
 	Metadata *Metadata
@@ -106,7 +106,7 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 		CaPrivateKey:          string(payload.CAPrivateKey),
 		CaCert:                string(payload.CACert),
 		Subject:               payload.Subject,
-		CrlDistributionPoints: payload.CrlDistributionPoint,
+		CrlDistributionPoints: payload.CrlDistributionPoints,
 		Metadata: &protobuf.Metadata{
 			Id:           payload.Metadata.Id,
 			CreatedAt:    payload.Metadata.CreatedAt,
