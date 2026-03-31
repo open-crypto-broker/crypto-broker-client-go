@@ -3,6 +3,44 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.2.0] - 2026-03-31
+
+### 🚀 Features
+
+- Add nightly security scan (#41)
+- Updated all direct & transitive dependencies
+- Updated code to include correlationId
+- Updated proto reference & regenerated messages
+- Update go version to latest
+- Removed auto telemetry
+- Updated docs adding reference to crlDistributionPoint
+- Implement gRPC retry policy and add tests for retry behavior (#34)
+- Updated proto reference, implemented fake endpoint
+- Fixed minor issues
+- Updated protobuf submodule reference
+- Switch to explicit tracing
+- Updated versions of packages
+- Implemented passing OTEL tracing context
+- Implement BenchmarkData functionality and add corresponding tests (#31)
+- [**breaking**] Removed error from health method and updated code accordingly
+- Updated proto and adjusted library + removed OS referencing benchmark
+- Add Benchmark functionality and refactor health check methods
+- Implement health check functionality for gRPC server (#86)
+
+### 🐛 Bug Fixes
+
+- Correct naming of CrlDistributionPoint to CrlDistributionPoints in SignCertificatePayload (#43)
+- Adjust gRPC retry policy backoff settings for improved performance (#38)
+- Update default socket path for consistency across platforms (#37)
+
+### 🚜 Refactor
+
+- Adjust Task setup (#30)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update actions to latest versions for Node 24 support (#44)
+
 ## [0.1.0] - 2025-12-02
 
 ### 🚀 Features
