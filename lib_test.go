@@ -2,6 +2,7 @@ package cryptobrokerclientgo
 
 import (
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -32,5 +33,16 @@ func TestNewLibrary(t *testing.T) {
 				return
 			}
 		})
+	}
+}
+
+func TestLibrary_Close(t *testing.T) {
+	lib := &Library{conn: nil}
+	err := lib.Close()
+	if err == nil {
+		t.Fatalf("Library.Close() expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "missing connection") {
+		t.Fatalf("Library.Close() error = %q, want it to mention missing connection", err.Error())
 	}
 }
