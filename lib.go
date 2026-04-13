@@ -89,6 +89,7 @@ func (lib *Library) verifyConnection(ctx context.Context) error {
 		switch state {
 		case connectivity.Ready:
 			return nil
+		case connectivity.Connecting, connectivity.TransientFailure, connectivity.Idle:
 		case connectivity.Shutdown:
 			return fmt.Errorf("connection is SHUTDOWN")
 		}

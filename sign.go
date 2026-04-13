@@ -139,7 +139,7 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 	case b64:
 		return resp, nil
 	case privacyEnhancedMail:
-		certDER, err := base64.StdEncoding.DecodeString(resp.SignedCertificate)
+		certDER, err := base64.StdEncoding.DecodeString(resp.GetSignedCertificate())
 		if err != nil {
 			return nil, err
 		}
