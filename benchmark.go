@@ -66,7 +66,7 @@ func (lib *Library) BenchmarkData(ctx context.Context, payload BenchmarkDataPayl
 	}
 
 	var results BenchmarkResults
-	if err := json.Unmarshal([]byte(resp.BenchmarkResults), &results); err != nil {
+	if err := json.Unmarshal([]byte(resp.GetBenchmarkResults()), &results); err != nil {
 		return nil, fmt.Errorf("failed to decode benchmarkResults: %w", err)
 	}
 

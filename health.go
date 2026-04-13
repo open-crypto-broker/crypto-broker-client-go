@@ -26,7 +26,7 @@ func (lib *Library) HealthData(ctx context.Context) *HealthDataResponse {
 	}
 
 	var status string
-	switch resp.Status {
+	switch resp.GetStatus() {
 	case grpc_health_v1.HealthCheckResponse_SERVING:
 		status = StatusServing
 	case grpc_health_v1.HealthCheckResponse_NOT_SERVING:

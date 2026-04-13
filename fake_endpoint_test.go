@@ -38,16 +38,16 @@ func TestLibrary_FakeEndpoint(t *testing.T) {
 			},
 			mockFunc: func() {
 				mockedClient.On("FakeEndpoint", mock.Anything, mock.MatchedBy(func(req *protobuf.FakeEndpointRequest) bool {
-					if req == nil || req.Metadata == nil {
+					if req == nil || req.GetMetadata() == nil {
 						return false
 					}
-					if req.Metadata.Id == "" || req.Metadata.CreatedAt == "" {
+					if req.GetMetadata().GetId() == "" || req.GetMetadata().GetCreatedAt() == "" {
 						return false
 					}
-					if _, err := time.Parse(time.RFC3339, req.Metadata.CreatedAt); err != nil {
+					if _, err := time.Parse(time.RFC3339, req.GetMetadata().GetCreatedAt()); err != nil {
 						return false
 					}
-					return req.Metadata.TraceContext == nil
+					return req.GetMetadata().GetTraceContext() == nil
 				})).Return(&protobuf.FakeEndpointResponse{}, nil).Once()
 			},
 			args: args{
@@ -64,15 +64,15 @@ func TestLibrary_FakeEndpoint(t *testing.T) {
 			},
 			mockFunc: func() {
 				mockedClient.On("FakeEndpoint", mock.Anything, mock.MatchedBy(func(req *protobuf.FakeEndpointRequest) bool {
-					if req == nil || req.Metadata == nil || req.Metadata.TraceContext == nil {
+					if req == nil || req.GetMetadata() == nil || req.GetMetadata().GetTraceContext() == nil {
 						return false
 					}
-					tc := req.Metadata.TraceContext
-					return tc.TraceId == "trace" &&
-						tc.SpanId == "span" &&
-						tc.TraceFlags == "01" &&
-						tc.TraceState == "state" &&
-						tc.CorrelationId == "corr"
+					tc := req.GetMetadata().GetTraceContext()
+					return tc.GetTraceId() == "trace" &&
+						tc.GetSpanId() == "span" &&
+						tc.GetTraceFlags() == "01" &&
+						tc.GetTraceState() == "state" &&
+						tc.GetCorrelationId() == "corr"
 				})).Return(&protobuf.FakeEndpointResponse{}, nil).Once()
 			},
 			args: args{
