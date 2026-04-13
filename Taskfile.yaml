@@ -19,9 +19,9 @@ tasks:
   # - https://go.dev/doc/tutorial/govulncheck
   tools:
     desc: "Download tools required for development"
-    deps: [install-protobuf-compiler, install-go-protoc-modules, install-go-vulnerability-check]
+    deps: [install-protobuf-compiler, install-go-protoc-modules, install-go-vulnerability-check, install-golangci-lint]
     cmds:
-      - protoc --version && protoc-gen-go --version && govulncheck --version
+      - protoc --version && protoc-gen-go --version && govulncheck --version && golangci-lint --version
 
   # Public task to install the pre-built protobuf compiler depending on the architecture
   install-protobuf-compiler:
@@ -109,6 +109,11 @@ tasks:
     cmds:
       - brew install govulncheck
 
+  install-golangci-lint:
+    desc: "Install golangci-lint"
+    cmds:
+      - curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.11.4
+
   ################# Build Go Client ####################
 
   proto:
@@ -149,6 +154,12 @@ tasks:
     cmds:
       - go test ./... -cover
 
+  golangci-lint:
+    desc: "Run golangci-lint"
+    deps: [install-golangci-lint]
+    cmds:
+      - golangci-lint run ./...
+
   vulnerability-check:
     desc: "Run vulnerability check"
     deps: [install-go-vulnerability-check]
@@ -161,5 +172,6 @@ tasks:
       - task: check-dependencies
       - task: format
       - task: lint
+      - task: golangci-lint
       - task: unit-test
       - task: vulnerability-check
