@@ -16,9 +16,14 @@ on:
         type: string
         default: "."
 
+permissions: {}
+
 jobs:
   scan:
-    uses: open-crypto-broker/.github/.github/workflows/security-scan.yaml@main
+    permissions:
+      security-events: write
+      contents: read
+    uses: open-crypto-broker/.github/.github/workflows/security-scan.yaml@main # nolint # zizmor: ignore[unpinned-uses]
     with:
       scan_directory: ${{ inputs.scan_directory || true }}
       directory_to_scan: ${{ inputs.directory_to_scan || '.' }}
