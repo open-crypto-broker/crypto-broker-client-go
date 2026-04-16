@@ -23,6 +23,7 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      packages: read # required even if scan-image is skipped; GitHub validates all job permissions at parse time
     uses: open-crypto-broker/.github/.github/workflows/security-scan.yaml@main # nolint # zizmor: ignore[unpinned-uses]
     with:
       scan_directory: ${{ inputs.scan_directory || true }}
