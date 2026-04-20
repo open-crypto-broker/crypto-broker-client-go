@@ -3,6 +3,27 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.2.1] - 2026-04-20
+
+### 🚀 Features
+
+- Use hash tagged actions, fix lint issues (#46)
+- Updated golang dependencies & updated required minimal go version
+- Add workflow lint (#47)
+- Added golangci-lint support to Taskfile
+- Implemented golangci-lint and fixed errors
+- Increated unit test coverage
+
+### 🐛 Bug Fixes
+
+- Remove persist credentials from release workflow (#53)
+- Adjust permissions for nightly workflow (#51)
+- Refactor workflow lint action (#50)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update protobuf submodule to latest commit (#52)
+
 ## [0.2.0] - 2026-03-31
 
 ### 🚀 Features
