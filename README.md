@@ -114,16 +114,6 @@ If you want to additionally invoke the local pipeline for code formatting, you c
 task ci
 ```
 
-To run benchmarks, invoke
-
-```shell
-task run-benchmarks
-```
-
-More info on benchmarks can be found in [testing](https://pkg.go.dev/testing@go1.25.3#hdr-Benchmarks) pkg. For detailed description of bench output see [proposal](https://go.googlesource.com/proposal/+/master/design/14313-benchmark-format.md).
-
-For the sign command and some of benchmarks, you need to have the [deployment repository](https://github.com/open-crypto-broker/crypto-broker-deployment) in the same parent directory as this repository. Check the command definitions in the `Taskfile` file to run your own custom commands.
-
 More thorough testing is also provided in the deployment repository. The same pipeline will run in GitHub Actions when submitting a Pull Request, so it is recommended to also clone and run the testing of the deployment repository.
 
 ## Support, Feedback, Contributing
