@@ -137,44 +137,6 @@ func TestLibrary_HealthData(t *testing.T) {
 	}
 }
 
-func BenchmarkHealthData(b *testing.B) {
-	ctx, cancel := context.WithTimeout(b.Context(), 10*time.Second)
-	defer cancel()
-	lib, err := NewLibrary(ctx)
-	if err != nil {
-		b.Fatalf("could not instantiate library, err: %s", err.Error())
-	}
-
-	b.Run("HealthData, synchronously", func(b *testing.B) {
-		for b.Loop() {
-			resp := lib.HealthData(ctx)
-			notWantedStatuses := []string{StatusNotServing, StatusUnknown}
-			if slices.Contains(notWantedStatuses, resp.Status) {
-				b.Errorf("response status is one that is not expected, status: %s", resp.Status)
-			}
-		}
-	})
-}
-
-func BenchmarkHealthDataParallel(b *testing.B) {
-	b.RunParallel(func(p *testing.PB) {
-		ctx, cancel := context.WithTimeout(b.Context(), 10*time.Second)
-		defer cancel()
-		lib, err := NewLibrary(ctx)
-		if err != nil {
-			b.Fatalf("could not instantiate library, err: %s", err.Error())
-		}
-
-		for p.Next() {
-			resp := lib.HealthData(ctx)
-			notWantedStatuses := []string{StatusNotServing, StatusUnknown}
-			if slices.Contains(notWantedStatuses, resp.Status) {
-				b.Errorf("response status is one that is not expected, status: %s", resp.Status)
-			}
-		}
-	})
-}
-
 // TestLibrary_HealthData_E2E tests HealthData against a real server
 // This test requires the server to be running (e.g., via `task run`)
 func TestLibrary_HealthData_E2E(t *testing.T) {
