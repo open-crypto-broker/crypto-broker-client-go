@@ -7,30 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"slices"
+
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"slices"
 )
-
-type mockedHealthClient struct {
-	mock.Mock
-}
-
-func (m *mockedHealthClient) Check(ctx context.Context, in *grpc_health_v1.HealthCheckRequest, opts ...grpc.CallOption) (*grpc_health_v1.HealthCheckResponse, error) {
-	args := m.Called(ctx, in)
-	return args.Get(0).(*grpc_health_v1.HealthCheckResponse), args.Error(1)
-}
-
-func (m *mockedHealthClient) Watch(ctx context.Context, in *grpc_health_v1.HealthCheckRequest, opts ...grpc.CallOption) (grpc_health_v1.Health_WatchClient, error) {
-	args := m.Called(ctx, in)
-	return nil, args.Error(1)
-}
-
-func (m *mockedHealthClient) List(ctx context.Context, in *grpc_health_v1.HealthListRequest, opts ...grpc.CallOption) (*grpc_health_v1.HealthListResponse, error) {
-	args := m.Called(ctx, in)
-	return args.Get(0).(*grpc_health_v1.HealthListResponse), args.Error(1)
-}
 
 func TestLibrary_HealthData(t *testing.T) {
 	mockedClient := &mockedHealthClient{}

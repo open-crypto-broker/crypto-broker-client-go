@@ -34,6 +34,7 @@ var retryPolicy string
 // Library implements convenient facade to work with crypto broker
 type Library struct {
 	client       protobuf.CryptoGrpcClient
+	development  protobuf.CryptoGrpcDevClient
 	healthClient grpc_health_v1.HealthClient
 	conn         *grpc.ClientConn
 }

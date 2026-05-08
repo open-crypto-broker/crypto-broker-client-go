@@ -47,5 +47,5 @@ func (lib *Library) FakeEndpoint(ctx context.Context, payload FakeEndpointPayloa
 		},
 	}
 
-	return lib.client.FakeEndpoint(ctx, req)
+	return lib.development.FakeEndpoint(ctx, req)
 }
