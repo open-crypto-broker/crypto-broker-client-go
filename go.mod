@@ -4,6 +4,8 @@ go 1.26.3
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
+	github.com/sony/gobreaker/v2 v2.4.0
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
@@ -12,6 +14,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
+	github.com/lithammer/dedent v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect

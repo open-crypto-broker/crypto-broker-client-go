@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/open-crypto-broker/crypto-broker-client-go/interceptor"
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
@@ -25,11 +27,14 @@ var (
 	defaultSocketPath = filepath.Join(baseDir, "crypto-broker-server.sock")
 )
 
-// retryPolicy is embedded from defaultRetryPolicy.json at build time.
-// To customize retry behavior, modify defaultRetryPolicy.json before building.
-//
-//go:embed defaultRetryPolicy.json
-var retryPolicy string
+// Embed retry policy and circuit breaker configs from YAML files.
+// To customize their behavior, modify the YAML files before building.
+
+//go:embed retry_policy.yaml
+var retryPolicyConfig []byte
+
+//go:embed circuit_breaker.yaml
+var circuitBreakerConfig []byte
 
 // Library implements convenient facade to work with crypto broker
 type Library struct {
@@ -47,13 +52,25 @@ func NewLibrary(ctx context.Context) (*Library, error) {
 		return net.Dial("unix", defaultSocketPath)
 	}
 
-	var unaryInterceptors []grpc.UnaryClientInterceptor
+	retry, err := interceptor.Retry(retryPolicyConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	breaker, err := interceptor.CircuitBreaker(circuitBreakerConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := grpc.NewClient("unix://"+defaultSocketPath,
 		grpc.WithContextDialer(dialer),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultServiceConfig(retryPolicy),
-		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
+		grpc.WithChainUnaryInterceptor(
+			retry,
+			breaker,
+		),
 	)
+
 	if err != nil {
 		return nil, fmt.Errorf("could not create gRPC client, err: %w", err)
 	}
@@ -63,8 +80,10 @@ func NewLibrary(ctx context.Context) (*Library, error) {
 		healthClient: grpc_health_v1.NewHealthClient(conn),
 		conn:         conn,
 	}
+
 	ctxTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
+
 	if err = lib.verifyConnection(ctxTimeout); err != nil {
 		return nil, fmt.Errorf("could not establish connection to gRPC server, err: %w", err)
 	}
