@@ -20,10 +20,11 @@ permissions: {}
 
 jobs:
   scan:
+    name: Nightly Security Scan
     permissions:
-      security-events: write
-      contents: read
-      packages: read # required even if scan-image is skipped; GitHub validates all job permissions at parse time
+      contents: read # for checking out code
+      packages: read # required for pulling images from GHCR
+      security-events: write # for uploading SARIF security scan results
     uses: open-crypto-broker/.github/.github/workflows/security-scan.yaml@main # nolint # zizmor: ignore[unpinned-uses]
     with:
       scan_directory: ${{ inputs.scan_directory || true }}
