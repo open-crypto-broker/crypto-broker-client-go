@@ -60,7 +60,7 @@ func (lib *Library) BenchmarkData(ctx context.Context, payload BenchmarkDataPayl
 		},
 	}
 
-	resp, err := lib.client.Benchmark(ctx, req)
+	resp, err := lib.development.Benchmark(ctx, req)
 	if err != nil {
 		return nil, err
 	}

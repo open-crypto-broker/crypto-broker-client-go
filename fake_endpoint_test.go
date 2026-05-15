@@ -11,11 +11,11 @@ import (
 )
 
 func TestLibrary_FakeEndpoint(t *testing.T) {
-	mockedClient := &mockedGRPCClient{}
+	mockedClient := &mockedGRPCDevClient{}
 
 	type mockFunc func()
 	type fields struct {
-		client protobuf.CryptoGrpcClient
+		client protobuf.CryptoGrpcDevClient
 		conn   *grpc.ClientConn
 	}
 	type args struct {
@@ -98,8 +98,8 @@ func TestLibrary_FakeEndpoint(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			lib := &Library{
-				client: tt.fields.client,
-				conn:   tt.fields.conn,
+				development: tt.fields.client,
+				conn:        tt.fields.conn,
 			}
 
 			tt.mockFunc()
