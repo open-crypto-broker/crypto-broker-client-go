@@ -4,6 +4,9 @@ import (
 	"context"
 	"strings"
 	"testing"
+
+	"github.com/open-crypto-broker/crypto-broker-client-go/interceptor"
+	"google.golang.org/grpc/codes"
 )
 
 func TestNewLibrary(t *testing.T) {
@@ -27,7 +30,23 @@ func TestNewLibrary(t *testing.T) {
 			ctx, cancel := tt.ctxGenerator()
 			defer cancel()
 
-			_, err := NewLibrary(ctx)
+			retryConf := interceptor.RetryConfig{
+				MaxAttempts:          5,
+				InitialBackoff:       "500ms",
+				BackoffMultiplier:    2.0,
+				RetryableStatusCodes: []codes.Code{14, 8, 10},
+			}
+
+			breakerConf := interceptor.CircuitConfig{
+				Name:                "crypto-grpc",
+				MaxRequests:         3,
+				Interval:            "30s",
+				Timeout:             "5s",
+				ConsecutiveFailures: 3,
+				FailureStatusCodes:  []codes.Code{14, 8, 10},
+			}
+
+			_, err := NewLibrary(ctx, retryConf, breakerConf)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewLibrary() error = %v, wantErr %v", err, tt.wantErr)
 				return

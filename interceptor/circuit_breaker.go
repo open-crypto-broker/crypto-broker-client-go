@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker/v2"
-	"github.com/stretchr/testify/assert/yaml"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,31 +22,25 @@ type CircuitConfig struct {
 }
 
 // Create and return circuit breaker interceptor
-func CircuitBreaker(config []byte) (grpc.UnaryClientInterceptor, error) {
-	var cfg CircuitConfig
-
-	if err := yaml.Unmarshal(config, &cfg); err != nil {
-		return nil, fmt.Errorf("parse circuit breaker config: %w", err)
-	}
-
-	interval, err := time.ParseDuration(cfg.Interval)
+func CircuitBreaker(config CircuitConfig) (grpc.UnaryClientInterceptor, error) {
+	interval, err := time.ParseDuration(config.Interval)
 	if err != nil {
 		return nil, fmt.Errorf("parse circuit breaker interval: %w", err)
 	}
 
-	timeout, err := time.ParseDuration(cfg.Timeout)
+	timeout, err := time.ParseDuration(config.Timeout)
 	if err != nil {
 		return nil, fmt.Errorf("parse circuit breaker timeout: %w", err)
 	}
 
 	breaker := gobreaker.NewCircuitBreaker[any](gobreaker.Settings{
-		Name:        cfg.Name,
-		MaxRequests: cfg.MaxRequests,
+		Name:        config.Name,
+		MaxRequests: config.MaxRequests,
 		Interval:    interval,
 		Timeout:     timeout,
 
 		ReadyToTrip: func(c gobreaker.Counts) bool {
-			return c.ConsecutiveFailures >= cfg.ConsecutiveFailures
+			return c.ConsecutiveFailures >= config.ConsecutiveFailures
 		},
 
 		IsSuccessful: func(err error) bool {
@@ -56,7 +49,7 @@ func CircuitBreaker(config []byte) (grpc.UnaryClientInterceptor, error) {
 			}
 
 			code := status.Code(err)
-			for _, c := range cfg.FailureStatusCodes {
+			for _, c := range config.FailureStatusCodes {
 				if c == code {
 					return false
 				}

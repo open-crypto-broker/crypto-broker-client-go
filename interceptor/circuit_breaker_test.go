@@ -5,24 +5,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lithammer/dedent"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func TestCircuitBreaker_StateChanges(t *testing.T) {
-	config := dedent.Dedent(`
-		name:                test
-		maxRequests:         2
-		interval:            30s
-		timeout:             1ms
-		consecutiveFailures: 2
-		failureStatusCodes:
-		  - 14
-	`)
+	cfg := CircuitConfig{
+		Name:                "test",
+		MaxRequests:         2,
+		Interval:            "30s",
+		Timeout:             "1ms",
+		ConsecutiveFailures: 2,
+		FailureStatusCodes:  []codes.Code{14},
+	}
 
-	interceptor, err := CircuitBreaker([]byte(config))
+	interceptor, err := CircuitBreaker(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

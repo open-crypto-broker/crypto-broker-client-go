@@ -1,7 +1,0 @@
-maxAttempts: 5
-initialBackoff: 500ms
-backoffMultiplier: 2.0
-retryableStatusCodes:
-  - 14 # UNAVAILABLE 
-  - 8  # RESOURCE_EXHAUSTED
-  - 10 # ABORTED 
