@@ -48,8 +48,7 @@ func TestLibrary_HashData(t *testing.T) {
 					Profile: "Default",
 					Input:   []byte("Hello world"),
 					Metadata: &Metadata{
-						Id:        "123",
-						CreatedAt: "Today",
+						Id: "123",
 					},
 				},
 			},
@@ -72,8 +71,7 @@ func TestLibrary_HashData(t *testing.T) {
 					Profile: "Default",
 					Input:   []byte("Hello world"),
 					Metadata: &Metadata{
-						Id:        "123",
-						CreatedAt: "Today",
+						Id: "123",
 					},
 				},
 			},

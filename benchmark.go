@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
@@ -35,8 +34,7 @@ func (lib *Library) BenchmarkData(ctx context.Context, payload BenchmarkDataPayl
 	// Create Metadata if not provided
 	if payload.Metadata == nil {
 		payload.Metadata = &Metadata{
-			Id:        uuid.New().String(),
-			CreatedAt: time.Now().UTC().Format(time.RFC3339),
+			Id: uuid.New().String(),
 		}
 	}
 
@@ -55,7 +53,6 @@ func (lib *Library) BenchmarkData(ctx context.Context, payload BenchmarkDataPayl
 	req := &protobuf.BenchmarkRequest{
 		Metadata: &protobuf.Metadata{
 			Id:           payload.Metadata.Id,
-			CreatedAt:    payload.Metadata.CreatedAt,
 			TraceContext: protoTraceContext,
 		},
 	}
