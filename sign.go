@@ -83,8 +83,7 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 	// Create the Metadata on the fly if not provided
 	if payload.Metadata == nil {
 		payload.Metadata = &Metadata{
-			Id:        uuid.New().String(),
-			CreatedAt: time.Now().UTC().Format(time.RFC3339),
+			Id: uuid.New().String(),
 		}
 	}
 
@@ -109,7 +108,6 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 		CrlDistributionPoints: payload.CrlDistributionPoints,
 		Metadata: &protobuf.Metadata{
 			Id:           payload.Metadata.Id,
-			CreatedAt:    payload.Metadata.CreatedAt,
 			TraceContext: protoTraceContext,
 		},
 	}

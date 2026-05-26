@@ -3,7 +3,6 @@ package cryptobrokerclientgo
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 	"github.com/stretchr/testify/mock"
@@ -41,10 +40,7 @@ func TestLibrary_FakeEndpoint(t *testing.T) {
 					if req == nil || req.GetMetadata() == nil {
 						return false
 					}
-					if req.GetMetadata().GetId() == "" || req.GetMetadata().GetCreatedAt() == "" {
-						return false
-					}
-					if _, err := time.Parse(time.RFC3339, req.GetMetadata().GetCreatedAt()); err != nil {
+					if req.GetMetadata().GetId() == "" {
 						return false
 					}
 					return req.GetMetadata().GetTraceContext() == nil
@@ -79,8 +75,7 @@ func TestLibrary_FakeEndpoint(t *testing.T) {
 				ctx: context.TODO(),
 				payload: FakeEndpointPayload{
 					Metadata: &Metadata{
-						Id:        "id-123",
-						CreatedAt: "2026-01-01T00:00:00Z",
+						Id: "id-123",
 						TraceContext: &TraceContext{
 							TraceId:       "trace",
 							SpanId:        "span",

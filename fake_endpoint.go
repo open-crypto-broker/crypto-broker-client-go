@@ -2,7 +2,6 @@ package cryptobrokerclientgo
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -23,8 +22,7 @@ func (lib *Library) FakeEndpoint(ctx context.Context, payload FakeEndpointPayloa
 	// Create the Metadata if not provided
 	if payload.Metadata == nil {
 		payload.Metadata = &Metadata{
-			Id:        uuid.New().String(),
-			CreatedAt: time.Now().UTC().Format(time.RFC3339),
+			Id: uuid.New().String(),
 		}
 	}
 	// Convert client TraceContext to protobuf TraceContext
@@ -42,7 +40,6 @@ func (lib *Library) FakeEndpoint(ctx context.Context, payload FakeEndpointPayloa
 	req := &protobuf.FakeEndpointRequest{
 		Metadata: &protobuf.Metadata{
 			Id:           payload.Metadata.Id,
-			CreatedAt:    payload.Metadata.CreatedAt,
 			TraceContext: protoTraceContext,
 		},
 	}
