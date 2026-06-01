@@ -12,6 +12,7 @@ import (
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -27,15 +28,6 @@ var (
 	defaultSocketPath = filepath.Join(baseDir, "crypto-broker-server.sock")
 )
 
-// Embed retry policy and circuit breaker configs from YAML files.
-// To customize their behavior, modify the YAML files before building.
-
-//go:embed retry_policy.yaml
-var retryPolicyConfig []byte
-
-//go:embed circuit_breaker.yaml
-var circuitBreakerConfig []byte
-
 // Library implements convenient facade to work with crypto broker
 type Library struct {
 	client       protobuf.CryptoGrpcClient
@@ -45,21 +37,38 @@ type Library struct {
 }
 
 // NewLibrary returns pointer to GrpcLibrary instance.
-// Internally it establishes connection to the gRPC server and verifies it or returns non-nil error if any
-func NewLibrary(ctx context.Context) (*Library, error) {
+// Internally it establishes connection to the gRPC server,
+// configures provided unary interceptors, verifies connectivity,
+// or returns non-nil error if any occures.
+func NewLibrary(ctx context.Context, configs ...any) (*Library, error) {
 	// Create a custom dialer for Unix domain sockets
 	dialer := func(ctx context.Context, addr string) (net.Conn, error) {
 		return net.Dial("unix", defaultSocketPath)
 	}
 
-	retry, err := interceptor.Retry(retryPolicyConfig)
+	// Create default interceptors
+	retry, err := retryInterceptor()
 	if err != nil {
 		return nil, err
 	}
 
-	breaker, err := interceptor.CircuitBreaker(circuitBreakerConfig)
+	breaker, err := circuitBreakerInterceptor()
 	if err != nil {
 		return nil, err
+	}
+
+	// Apply custom configuration to interceptors
+	for _, conf := range configs {
+		switch t := conf.(type) {
+		case interceptor.RetryConfig:
+			retry, err = interceptor.Retry(t)
+		case interceptor.CircuitConfig:
+			breaker, err = interceptor.CircuitBreaker(t)
+		}
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	conn, err := grpc.NewClient("unix://"+defaultSocketPath,
@@ -124,4 +133,26 @@ func (lib *Library) verifyConnection(ctx context.Context) error {
 
 		state = lib.conn.GetState()
 	}
+}
+
+// Create and return default retry interceptor.
+func retryInterceptor() (grpc.UnaryClientInterceptor, error) {
+	return interceptor.Retry(interceptor.RetryConfig{
+		MaxAttempts:          5,
+		InitialBackoff:       "500ms",
+		BackoffMultiplier:    2.0,
+		RetryableStatusCodes: []codes.Code{14, 8, 10},
+	})
+}
+
+// Create and return default circuit breaker interceptor.
+func circuitBreakerInterceptor() (grpc.UnaryClientInterceptor, error) {
+	return interceptor.CircuitBreaker(interceptor.CircuitConfig{
+		Name:                "crypto-grpc",
+		MaxRequests:         3,
+		Interval:            "30s",
+		Timeout:             "5s",
+		ConsecutiveFailures: 3,
+		FailureStatusCodes:  []codes.Code{14, 8, 10},
+	})
 }

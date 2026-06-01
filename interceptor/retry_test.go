@@ -4,23 +4,20 @@ import (
 	"context"
 	"testing"
 
-	"github.com/lithammer/dedent"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func TestRetry_Retries(t *testing.T) {
-	config := dedent.Dedent(`
-    maxAttempts: 3
-    initialBackoff: 1ms
-    backoffMultiplier: 1
-    retryableStatusCodes:
-      - 14
-	`)
+	cfg := RetryConfig{
+		MaxAttempts:          3,
+		InitialBackoff:       "1ms",
+		BackoffMultiplier:    1,
+		RetryableStatusCodes: []codes.Code{14},
+	}
 
-	interceptor, err := Retry([]byte(config))
+	interceptor, err := Retry(cfg)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
