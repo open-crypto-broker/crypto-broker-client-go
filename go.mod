@@ -1,11 +1,10 @@
 module github.com/open-crypto-broker/crypto-broker-client-go
 
-go 1.26.3
+go 1.26.4
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
-	github.com/lithammer/dedent v1.1.0
 	github.com/sony/gobreaker/v2 v2.4.0
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.80.0
