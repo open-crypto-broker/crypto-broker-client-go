@@ -3,6 +3,26 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.3.0] - 2026-06-08
+
+### 🚀 Features
+
+- Update golang version from 1.26.3 to 1.26.4 (#64)
+- Enable users to customize interceptors (#62)
+- [**breaking**] Updated proto & adjusted code to it
+- Add license check (#60)
+- Add circuit breaker interceptor (#57)
+- Add dependabot config (#54)
+
+### 🐛 Bug Fixes
+
+- Extract FakeEndpoint and Benchmark endpoints to separate service (#56)
+- Removed e2e benchmarks
+
+### 🚜 Refactor
+
+- Adjust workflow files (#58)
+
 ## [0.2.1] - 2026-04-20
 
 ### 🚀 Features
