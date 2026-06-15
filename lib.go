@@ -36,15 +36,22 @@ type Library struct {
 	conn         *grpc.ClientConn
 }
 
+type GrpcConfig struct {
+	ConnMaxRetries int
+}
+
 // NewLibrary returns pointer to GrpcLibrary instance.
 // Internally it establishes connection to the gRPC server,
-// configures provided unary interceptors, verifies connectivity,
+// configures provided unary interceptors and grpc server, verifies connectivity,
 // or returns non-nil error if any occures.
 func NewLibrary(ctx context.Context, configs ...any) (*Library, error) {
 	// Create a custom dialer for Unix domain sockets
 	dialer := func(ctx context.Context, addr string) (net.Conn, error) {
 		return net.Dial("unix", defaultSocketPath)
 	}
+
+	// Set default GRPC server configuration
+	grpcConfig := GrpcConfig{ConnMaxRetries: 60}
 
 	// Create default interceptors
 	retry, err := retryInterceptor()
@@ -57,13 +64,15 @@ func NewLibrary(ctx context.Context, configs ...any) (*Library, error) {
 		return nil, err
 	}
 
-	// Apply custom configuration to interceptors
+	// Apply custom configurations
 	for _, conf := range configs {
 		switch t := conf.(type) {
 		case interceptor.RetryConfig:
 			retry, err = interceptor.Retry(t)
 		case interceptor.CircuitConfig:
 			breaker, err = interceptor.CircuitBreaker(t)
+		case GrpcConfig:
+			grpcConfig = t
 		}
 
 		if err != nil {
@@ -90,7 +99,8 @@ func NewLibrary(ctx context.Context, configs ...any) (*Library, error) {
 		conn:         conn,
 	}
 
-	ctxTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	duration := time.Duration(grpcConfig.ConnMaxRetries) * time.Second
+	ctxTimeout, cancel := context.WithTimeout(ctx, duration)
 	defer cancel()
 
 	if err = lib.verifyConnection(ctxTimeout); err != nil {
