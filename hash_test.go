@@ -14,6 +14,11 @@ import (
 func TestLibrary_HashData(t *testing.T) {
 	mockedClient := &mockedGRPCClient{}
 
+	rawDigest := []byte{
+		0x36, 0x91, 0x83, 0xd3, 0x78, 0x67, 0x73, 0xce, 0xf4, 0xe5, 0x6c, 0x7b, 0x84, 0x9e, 0x7e, 0xf5,
+		0xf7, 0x42, 0x86, 0x75, 0x10, 0xb6, 0x76, 0xd6, 0xb3, 0x8f, 0x8e, 0x38, 0xa2, 0x22, 0xd8, 0xa2,
+	}
+
 	type mockFunc func()
 	type fields struct {
 		client protobuf.CryptoGrpcClient
@@ -38,7 +43,10 @@ func TestLibrary_HashData(t *testing.T) {
 				conn:   &grpc.ClientConn{},
 			},
 			mockFunc: func() {
-				resp := &protobuf.HashResponse{HashValue: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a", HashAlgorithm: "sha3-512"}
+				resp := &protobuf.HashResponse{
+					HashValue:     &protobuf.HashResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
+					HashAlgorithm: "sha3-512",
+				}
 				mockedClient.On("Hash", mock.Anything, mock.Anything).
 					Return(resp, nil).Once()
 			},
@@ -52,7 +60,41 @@ func TestLibrary_HashData(t *testing.T) {
 					},
 				},
 			},
-			want:    &protobuf.HashResponse{HashValue: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a", HashAlgorithm: "sha3-512"},
+			want: &protobuf.HashResponse{
+				HashValue:     &protobuf.HashResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
+				HashAlgorithm: "sha3-512",
+			},
+			wantErr: false,
+		},
+		{
+			name: "HashData() succeeds when client returns raw digest bytes response",
+			fields: fields{
+				client: mockedClient,
+				conn:   &grpc.ClientConn{},
+			},
+			mockFunc: func() {
+				resp := &protobuf.HashResponse{
+					HashValue:     &protobuf.HashResponse_HashValueRaw{HashValueRaw: rawDigest},
+					HashAlgorithm: "sha3-256",
+				}
+				mockedClient.On("Hash", mock.Anything, mock.Anything).
+					Return(resp, nil).Once()
+			},
+			args: args{
+				ctx: context.TODO(),
+				payload: HashDataPayload{
+					Profile:      "Default",
+					Input:        []byte("Hello world"),
+					OutputFormat: OutputFormatRawDigestBytes,
+					Metadata: &Metadata{
+						Id: "123",
+					},
+				},
+			},
+			want: &protobuf.HashResponse{
+				HashValue:     &protobuf.HashResponse_HashValueRaw{HashValueRaw: rawDigest},
+				HashAlgorithm: "sha3-256",
+			},
 			wantErr: false,
 		},
 		{
