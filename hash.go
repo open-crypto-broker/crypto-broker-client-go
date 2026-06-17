@@ -12,11 +12,11 @@ import (
 type OutputFormat protobuf.HashOutputFormat
 
 const (
-	OutputFormatRawDigestBytes OutputFormat = OutputFormat(protobuf.HashOutputFormat_RAW)
-	OutputFormatHex            OutputFormat = OutputFormat(protobuf.HashOutputFormat_HEX)
+	OutputFormatRaw OutputFormat = OutputFormat(protobuf.HashOutputFormat_RAW)
+	OutputFormatHex OutputFormat = OutputFormat(protobuf.HashOutputFormat_HEX)
 )
 
-var ErrInvalidHashOutputFormat = fmt.Errorf("invalid hash output format, must be either %v or %v", OutputFormatRawDigestBytes, OutputFormatHex)
+var ErrInvalidHashOutputFormat = fmt.Errorf("invalid hash output format, must be either %v or %v", OutputFormatRaw, OutputFormatHex)
 
 // HashingOpts defines all required data that need to be provided in order to invoke hashing.
 // The Metadata field is optional and will be created automatically if not provided.
@@ -79,7 +79,7 @@ func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*pro
 	}
 
 	switch payload.OutputFormat {
-	case OutputFormatRawDigestBytes:
+	case OutputFormatRaw:
 		req.OutputFormat = protobuf.HashOutputFormat_RAW
 	case OutputFormatHex:
 		req.OutputFormat = protobuf.HashOutputFormat_HEX
