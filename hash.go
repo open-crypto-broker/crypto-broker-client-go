@@ -2,11 +2,21 @@ package cryptobrokerclientgo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 )
+
+type OutputFormat protobuf.HashOutputFormat
+
+const (
+	OutputFormatRawDigestBytes OutputFormat = OutputFormat(protobuf.HashOutputFormat_RAW)
+	OutputFormatHex            OutputFormat = OutputFormat(protobuf.HashOutputFormat_HEX)
+)
+
+var ErrInvalidHashOutputFormat = fmt.Errorf("invalid hash output format, must be either %v or %v", OutputFormatRawDigestBytes, OutputFormatHex)
 
 // HashingOpts defines all required data that need to be provided in order to invoke hashing.
 // The Metadata field is optional and will be created automatically if not provided.
@@ -16,6 +26,9 @@ type HashDataPayload struct {
 
 	// Input any arbitrary bytes that are meant to be hashed using the hashing algorithm from the profile
 	Input []byte
+
+	// OutputFormat defines the format of the hash output, either raw digest bytes or hex string
+	OutputFormat
 
 	// (Optional) Metadata to track the request back
 	Metadata *Metadata
@@ -63,6 +76,15 @@ func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*pro
 			Id:           payload.Metadata.Id,
 			TraceContext: protoTraceContext,
 		},
+	}
+
+	switch payload.OutputFormat {
+	case OutputFormatRawDigestBytes:
+		req.OutputFormat = protobuf.HashOutputFormat_RAW
+	case OutputFormatHex:
+		req.OutputFormat = protobuf.HashOutputFormat_HEX
+	default:
+		return nil, ErrInvalidHashOutputFormat
 	}
 
 	return lib.client.Hash(ctx, req)
