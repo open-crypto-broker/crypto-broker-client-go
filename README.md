@@ -67,6 +67,72 @@ if err != nil {
 fmt.Printf("Signed certificate: %s\n", responseBody.signedCertificate)
 ```
 
+## Custom Configurations
+
+You can customize the gRPC server and its interceptors (retry mechanism and circuit breaker) using the configuration structures outlined below.
+
+### gRPC Server Configuration
+
+Use the GrpcConfig struct to define the core connectivity parameters for the gRPC server.
+
+```go
+type GrpcConfig struct {
+  ConnMaxRetries int
+}
+```
+
+Example Usage
+
+```go
+grpcConfig := GrpcConfig{ConnMaxRetries: 60}
+
+lib, err := NewLibrary(ctx, grpcConf)
+```
+
+### Interceptor Configuration
+
+The library provides two configurable interceptors to improve resilience: a Retry Mechanism and a Circuit Breaker.
+
+```go
+type RetryConfig struct {
+  MaxAttempts          uint         `yaml:"maxAttempts"`
+  InitialBackoff       string       `yaml:"initialBackoff"`
+  BackoffMultiplier    float64      `yaml:"backoffMultiplier"`
+  RetryableStatusCodes []codes.Code `yaml:"retryableStatusCodes"`
+}
+
+type CircuitConfig struct {
+  Name                string       `yaml:"name"`
+  MaxRequests         uint32       `yaml:"maxRequests"`
+  Interval            string       `yaml:"interval"`
+  Timeout             string       `yaml:"timeout"`
+  ConsecutiveFailures uint32       `yaml:"consecutiveFailures"`
+  FailureStatusCodes  []codes.Code `yaml:"failureStatusCodes"`
+}
+```
+
+Example Usage
+
+```go
+retryConf := interceptor.RetryConfig{
+  MaxAttempts:          5,
+  InitialBackoff:       "500ms",
+  BackoffMultiplier:    2.0,
+  RetryableStatusCodes: []codes.Code{14, 8, 10},
+}
+
+breakerConf := interceptor.CircuitConfig{
+  Name:                "crypto-grpc",
+  MaxRequests:         3,
+  Interval:            "30s",
+  Timeout:             "5s",
+  ConsecutiveFailures: 3,
+  FailureStatusCodes:  []codes.Code{14, 8, 10},
+}
+
+lib, err := NewLibrary(ctx, retryConf, breakerConf)
+```
+
 ## Development
 
 This section covers how to contribute to the project and develop it further.
