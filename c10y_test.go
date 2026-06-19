@@ -14,9 +14,9 @@ func TestEncoding_String(t *testing.T) {
 			want: "PEM",
 		},
 		{
-			name: "B64 encoding stringifies to B64 keyword",
-			e:    b64,
-			want: "B64",
+			name: "DER encoding stringifies to DER keyword",
+			e:    distinguishedEncodingRules,
+			want: "DER",
 		},
 	}
 

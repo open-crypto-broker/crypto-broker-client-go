@@ -36,6 +36,7 @@ defer lib.Close()
 payload := cryptobrokerclientgo.HashDataPayload{
   Input:   []byte("Hello world"),
   Profile: "Default",
+  OutputFormat: cryptobrokerclientgo.OutputFormatHex,
   Metadata: &cryptobrokerclientgo.Metadata{
     Id:        uuid.New().String(),
     CreatedAt: time.Now().UTC().Format(time.RFC3339),
@@ -55,6 +56,7 @@ payload = cryptobrokerclientgo.SignCertificatePayload{
   CACert:       rawContentCACert,
   CrlDistributionPoints: crlDistributionPoints,
   Subject:      &customSubject,
+  OutputFormat: cryptobrokerclientgo.OutputFormatPem,
   Metadata: &cryptobrokerclientgo.Metadata{
     Id:        uuid.New().String(),
     CreatedAt: time.Now().UTC().Format(time.RFC3339),

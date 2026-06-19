@@ -6,8 +6,8 @@ const (
 	// privacyEnhancedMail represents PEM encoding
 	privacyEnhancedMail encoding = "PEM"
 
-	// b64 represents base64 encoding
-	b64 encoding = "B64"
+	// distinguishedEncodingRules represents DER encoding
+	distinguishedEncodingRules encoding = "DER"
 )
 
 // encoding represents string that is keyword of particular encoding used by library.
