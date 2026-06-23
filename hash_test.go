@@ -83,8 +83,8 @@ func TestLibrary_HashData(t *testing.T) {
 			args: args{
 				ctx: context.TODO(),
 				payload: HashDataPayload{
-					Profile:          "Default",
-					Input:            []byte("Hello world"),
+					Profile:      "Default",
+					Input:        []byte("Hello world"),
 					OutputFormat: OutputFormatRaw,
 					Metadata: &Metadata{
 						Id: "123",
