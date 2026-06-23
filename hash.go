@@ -27,8 +27,8 @@ type HashDataPayload struct {
 	// Input any arbitrary bytes that are meant to be hashed using the hashing algorithm from the profile
 	Input []byte
 
-	// OutputFormatHash defines the format of the hash output, either raw digest bytes or hex string
-	OutputFormatHash
+	// OutputFormat defines the format of the hash output, either raw digest bytes or hex string
+	OutputFormat OutputFormatHash
 
 	// (Optional) Metadata to track the request back
 	Metadata *Metadata
@@ -78,7 +78,7 @@ func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*pro
 		},
 	}
 
-	switch payload.OutputFormatHash {
+	switch payload.OutputFormat {
 	case OutputFormatRaw:
 		req.OutputFormat = protobuf.HashOutputFormat_RAW
 	case OutputFormatHex:
