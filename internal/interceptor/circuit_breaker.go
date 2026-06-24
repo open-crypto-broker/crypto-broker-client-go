@@ -2,6 +2,7 @@ package interceptor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -10,6 +11,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+var (
+	ErrCircuitOpen     = errors.New("circuit breaker is open")
+	ErrCircuitHalfOpen = errors.New("circuit breaker half-open limit reached")
 )
 
 type CircuitConfig struct {
@@ -80,7 +86,14 @@ func CircuitBreaker(config CircuitConfig) (grpc.UnaryClientInterceptor, error) {
 			return nil, invoker(ctx, method, req, reply, cc, opts...)
 		})
 
-		return err
+		switch {
+		case errors.Is(err, gobreaker.ErrOpenState):
+			return ErrCircuitOpen
+		case errors.Is(err, gobreaker.ErrTooManyRequests):
+			return ErrCircuitHalfOpen
+		default:
+			return err
+		}
 	}
 
 	return interceptor, nil

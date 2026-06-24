@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/interceptor"
+	"github.com/open-crypto-broker/crypto-broker-client-go/internal/interceptor"
 	"google.golang.org/grpc/codes"
 )
 
