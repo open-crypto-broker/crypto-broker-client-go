@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/interceptor"
+	"github.com/open-crypto-broker/crypto-broker-client-go/internal/interceptor"
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 
 	"google.golang.org/grpc"
@@ -26,6 +26,12 @@ import (
 var (
 	baseDir           = "/tmp/open-crypto-broker"
 	defaultSocketPath = filepath.Join(baseDir, "crypto-broker-server.sock")
+)
+
+// Errors returned from interceptors.
+var (
+	ErrCircuitOpen     = interceptor.ErrCircuitOpen
+	ErrCircuitHalfOpen = interceptor.ErrCircuitHalfOpen
 )
 
 // Library implements convenient facade to work with crypto broker
