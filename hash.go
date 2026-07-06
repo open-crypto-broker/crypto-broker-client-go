@@ -49,7 +49,7 @@ type Metadata struct {
 
 // HashData performs logic that results in hashing provided bytes using crypto broker.
 // As result it returns hash of provided bytes and non-nil error if any.
-func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*protobuf.HashResponse, error) {
+func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*protobuf.HashDataResponse, error) {
 
 	// Create the Metadata if not provided
 	if payload.Metadata == nil {
@@ -69,7 +69,7 @@ func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*pro
 		}
 	}
 
-	req := &protobuf.HashRequest{
+	req := &protobuf.HashDataRequest{
 		Profile: payload.Profile,
 		Input:   payload.Input,
 		Metadata: &protobuf.Metadata{
@@ -87,5 +87,5 @@ func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*pro
 		return nil, ErrInvalidHashOutputFormat
 	}
 
-	return lib.client.Hash(ctx, req)
+	return lib.client.HashData(ctx, req)
 }
