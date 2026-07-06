@@ -33,7 +33,7 @@ func TestLibrary_HashData(t *testing.T) {
 		fields   fields
 		mockFunc mockFunc
 		args     args
-		want     *protobuf.HashResponse
+		want     *protobuf.HashDataResponse
 		wantErr  bool
 	}{
 		{
@@ -43,11 +43,11 @@ func TestLibrary_HashData(t *testing.T) {
 				conn:   &grpc.ClientConn{},
 			},
 			mockFunc: func() {
-				resp := &protobuf.HashResponse{
-					HashValue:     &protobuf.HashResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
+				resp := &protobuf.HashDataResponse{
+					HashValue:     &protobuf.HashDataResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
 					HashAlgorithm: "sha3-512",
 				}
-				mockedClient.On("Hash", mock.Anything, mock.Anything).
+				mockedClient.On("HashData", mock.Anything, mock.Anything).
 					Return(resp, nil).Once()
 			},
 			args: args{
@@ -60,8 +60,8 @@ func TestLibrary_HashData(t *testing.T) {
 					},
 				},
 			},
-			want: &protobuf.HashResponse{
-				HashValue:     &protobuf.HashResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
+			want: &protobuf.HashDataResponse{
+				HashValue:     &protobuf.HashDataResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
 				HashAlgorithm: "sha3-512",
 			},
 			wantErr: false,
@@ -73,11 +73,11 @@ func TestLibrary_HashData(t *testing.T) {
 				conn:   &grpc.ClientConn{},
 			},
 			mockFunc: func() {
-				resp := &protobuf.HashResponse{
-					HashValue:     &protobuf.HashResponse_HashValueRaw{HashValueRaw: rawDigest},
+				resp := &protobuf.HashDataResponse{
+					HashValue:     &protobuf.HashDataResponse_HashValueRaw{HashValueRaw: rawDigest},
 					HashAlgorithm: "sha3-256",
 				}
-				mockedClient.On("Hash", mock.Anything, mock.Anything).
+				mockedClient.On("HashData", mock.Anything, mock.Anything).
 					Return(resp, nil).Once()
 			},
 			args: args{
@@ -91,8 +91,8 @@ func TestLibrary_HashData(t *testing.T) {
 					},
 				},
 			},
-			want: &protobuf.HashResponse{
-				HashValue:     &protobuf.HashResponse_HashValueRaw{HashValueRaw: rawDigest},
+			want: &protobuf.HashDataResponse{
+				HashValue:     &protobuf.HashDataResponse_HashValueRaw{HashValueRaw: rawDigest},
 				HashAlgorithm: "sha3-256",
 			},
 			wantErr: false,
@@ -104,8 +104,8 @@ func TestLibrary_HashData(t *testing.T) {
 				conn:   &grpc.ClientConn{},
 			},
 			mockFunc: func() {
-				mockedClient.On("Hash", mock.Anything, mock.Anything).
-					Return(&protobuf.HashResponse{}, errors.New("some error")).Once()
+				mockedClient.On("HashData", mock.Anything, mock.Anything).
+					Return(&protobuf.HashDataResponse{}, errors.New("some error")).Once()
 			},
 			args: args{
 				ctx: context.TODO(),
@@ -117,7 +117,7 @@ func TestLibrary_HashData(t *testing.T) {
 					},
 				},
 			},
-			want:    &protobuf.HashResponse{},
+			want:    &protobuf.HashDataResponse{},
 			wantErr: true,
 		},
 	}

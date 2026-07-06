@@ -42,6 +42,7 @@ payload := cryptobrokerclientgo.HashDataPayload{
     CreatedAt: time.Now().UTC().Format(time.RFC3339),
   },
 }
+
 responseBody, err := lib.HashData(ctx, payload)
 if err != nil {
   panic(err)
@@ -62,6 +63,7 @@ payload = cryptobrokerclientgo.SignCertificatePayload{
     CreatedAt: time.Now().UTC().Format(time.RFC3339),
   },
 }
+
 responseBody, err := lib.SignCertificate(ctx, payload)
 if err != nil {
   panic(err)

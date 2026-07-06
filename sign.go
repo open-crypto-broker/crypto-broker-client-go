@@ -57,7 +57,7 @@ var ErrInvalidSignOutputFormat = fmt.Errorf("invalid sign output format, must be
 // SignCertificate create certificate using crypto broker.
 // As result it returns signed x509 certificate or non-nil error if any.
 // Please familiarize yourself with the encoding options before using this method.
-func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificatePayload) (*protobuf.SignResponse, error) {
+func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificatePayload) (*protobuf.SignCertificateResponse, error) {
 	// Create the Metadata on the fly if not provided
 	if payload.Metadata == nil {
 		payload.Metadata = &Metadata{
@@ -77,7 +77,7 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 		}
 	}
 
-	req := &protobuf.SignRequest{
+	req := &protobuf.SignCertificateRequest{
 		Profile:               payload.Profile,
 		Csr:                   string(payload.CSR),
 		CaPrivateKey:          string(payload.CAPrivateKey),
@@ -115,7 +115,7 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 		req.ValidNotAfter = toPointerUint64(payload.ValidNotAfter.UTC().Unix())
 	}
 
-	resp, err := lib.client.Sign(ctx, req)
+	resp, err := lib.client.SignCertificate(ctx, req)
 	if err != nil {
 		return nil, err
 	}

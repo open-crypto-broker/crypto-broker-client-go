@@ -14,14 +14,14 @@ type mockedGRPCClient struct {
 	mock.Mock
 }
 
-func (m *mockedGRPCClient) Hash(ctx context.Context, in *protobuf.HashRequest, opts ...grpc.CallOption) (*protobuf.HashResponse, error) {
+func (m *mockedGRPCClient) HashData(ctx context.Context, in *protobuf.HashDataRequest, opts ...grpc.CallOption) (*protobuf.HashDataResponse, error) {
 	args := m.Called(ctx, in)
-	return args.Get(0).(*protobuf.HashResponse), args.Error(1)
+	return args.Get(0).(*protobuf.HashDataResponse), args.Error(1)
 }
 
-func (m *mockedGRPCClient) Sign(ctx context.Context, in *protobuf.SignRequest, opts ...grpc.CallOption) (*protobuf.SignResponse, error) {
+func (m *mockedGRPCClient) SignCertificate(ctx context.Context, in *protobuf.SignCertificateRequest, opts ...grpc.CallOption) (*protobuf.SignCertificateResponse, error) {
 	args := m.Called(ctx, in)
-	return args.Get(0).(*protobuf.SignResponse), args.Error(1)
+	return args.Get(0).(*protobuf.SignCertificateResponse), args.Error(1)
 }
 
 // Mocked client for grpc dev service
