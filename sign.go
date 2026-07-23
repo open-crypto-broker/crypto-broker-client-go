@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 )
 
@@ -58,25 +56,6 @@ var ErrInvalidSignOutputFormat = fmt.Errorf("invalid sign output format, must be
 // As result it returns signed x509 certificate or non-nil error if any.
 // Please familiarize yourself with the encoding options before using this method.
 func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificatePayload) (*protobuf.SignCertificateResponse, error) {
-	// Create the Metadata on the fly if not provided
-	if payload.Metadata == nil {
-		payload.Metadata = &Metadata{
-			Id: uuid.New().String(),
-		}
-	}
-
-	// Convert client TraceContext to protobuf TraceContext
-	var protoTraceContext *protobuf.TraceContext
-	if payload.Metadata.TraceContext != nil {
-		protoTraceContext = &protobuf.TraceContext{
-			TraceId:       payload.Metadata.TraceContext.TraceId,
-			SpanId:        payload.Metadata.TraceContext.SpanId,
-			TraceFlags:    payload.Metadata.TraceContext.TraceFlags,
-			TraceState:    payload.Metadata.TraceContext.TraceState,
-			CorrelationId: payload.Metadata.TraceContext.CorrelationId,
-		}
-	}
-
 	req := &protobuf.SignCertificateRequest{
 		Profile:               payload.Profile,
 		Csr:                   string(payload.CSR),
@@ -84,10 +63,7 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 		CaCert:                string(payload.CACert),
 		Subject:               payload.Subject,
 		CrlDistributionPoints: payload.CrlDistributionPoints,
-		Metadata: &protobuf.Metadata{
-			Id:           payload.Metadata.Id,
-			TraceContext: protoTraceContext,
-		},
+		Metadata:              newProtoMetadata(payload.Metadata),
 	}
 
 	switch payload.OutputFormat {
