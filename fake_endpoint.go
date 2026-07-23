@@ -3,8 +3,6 @@ package cryptobrokerclientgo
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 )
 
@@ -18,30 +16,8 @@ type FakeEndpointPayload struct {
 // FakeEndpoint performs logic that results in calling fake endpoint on crypto broker.
 // As result it returns response message and non-nil error if any.
 func (lib *Library) FakeEndpoint(ctx context.Context, payload FakeEndpointPayload) (*protobuf.FakeEndpointResponse, error) {
-
-	// Create the Metadata if not provided
-	if payload.Metadata == nil {
-		payload.Metadata = &Metadata{
-			Id: uuid.New().String(),
-		}
-	}
-	// Convert client TraceContext to protobuf TraceContext
-	var protoTraceContext *protobuf.TraceContext
-	if payload.Metadata.TraceContext != nil {
-		protoTraceContext = &protobuf.TraceContext{
-			TraceId:       payload.Metadata.TraceContext.TraceId,
-			SpanId:        payload.Metadata.TraceContext.SpanId,
-			TraceFlags:    payload.Metadata.TraceContext.TraceFlags,
-			TraceState:    payload.Metadata.TraceContext.TraceState,
-			CorrelationId: payload.Metadata.TraceContext.CorrelationId,
-		}
-	}
-
 	req := &protobuf.FakeEndpointRequest{
-		Metadata: &protobuf.Metadata{
-			Id:           payload.Metadata.Id,
-			TraceContext: protoTraceContext,
-		},
+		Metadata: newProtoMetadata(payload.Metadata),
 	}
 
 	return lib.development.FakeEndpoint(ctx, req)

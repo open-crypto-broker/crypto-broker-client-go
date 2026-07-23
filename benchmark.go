@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 )
 
@@ -31,30 +30,8 @@ type BenchmarkResults struct {
 // For now, the server encodes results as a JSON string inside the protobuf response. This method
 // decodes that JSON into typed Go structs for convenience.
 func (lib *Library) BenchmarkData(ctx context.Context, payload BenchmarkDataPayload) (*BenchmarkResults, error) {
-	// Create Metadata if not provided
-	if payload.Metadata == nil {
-		payload.Metadata = &Metadata{
-			Id: uuid.New().String(),
-		}
-	}
-
-	// Convert client TraceContext to protobuf TraceContext
-	var protoTraceContext *protobuf.TraceContext
-	if payload.Metadata.TraceContext != nil {
-		protoTraceContext = &protobuf.TraceContext{
-			TraceId:       payload.Metadata.TraceContext.TraceId,
-			SpanId:        payload.Metadata.TraceContext.SpanId,
-			TraceFlags:    payload.Metadata.TraceContext.TraceFlags,
-			TraceState:    payload.Metadata.TraceContext.TraceState,
-			CorrelationId: payload.Metadata.TraceContext.CorrelationId,
-		}
-	}
-
 	req := &protobuf.BenchmarkRequest{
-		Metadata: &protobuf.Metadata{
-			Id:           payload.Metadata.Id,
-			TraceContext: protoTraceContext,
-		},
+		Metadata: newProtoMetadata(payload.Metadata),
 	}
 
 	resp, err := lib.development.Benchmark(ctx, req)
