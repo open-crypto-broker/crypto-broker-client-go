@@ -3,6 +3,26 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.4.0] - 2026-07-24
+
+### 🚀 Features
+
+- Upgrade go version to 1.26.5 (#76)
+- Adjusted code to new proto
+- [**breaking**] Updated proto reference and regenerated stubs
+- Return custom errors in circuit breaker (#72)
+- Adjusted code to new proto
+- Updated proto reference and regenerated stubs
+- [**breaking**] Changed Hash procedure by adding mandatory outputFormat field
+- Enable initial connection configuration + add documentation (#67)
+
+### 🐛 Bug Fixes
+
+- Linted code
+- Fixed field name
+- Fixed naming convention for raw digest bytes
+- Limit create-github-app-token permissions (#68)
+
 ## [0.3.1] - 2026-06-08
 
 ### 🚀 Features
