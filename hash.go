@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
-
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 )
 
@@ -34,48 +32,13 @@ type HashDataPayload struct {
 	Metadata *Metadata
 }
 
-type TraceContext struct {
-	TraceId       string
-	SpanId        string
-	TraceFlags    string
-	TraceState    string
-	CorrelationId string
-}
-
-type Metadata struct {
-	Id           string
-	TraceContext *TraceContext
-}
-
 // HashData performs logic that results in hashing provided bytes using crypto broker.
 // As result it returns hash of provided bytes and non-nil error if any.
 func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*protobuf.HashDataResponse, error) {
-
-	// Create the Metadata if not provided
-	if payload.Metadata == nil {
-		payload.Metadata = &Metadata{
-			Id: uuid.New().String(),
-		}
-	}
-	// Convert client TraceContext to protobuf TraceContext
-	var protoTraceContext *protobuf.TraceContext
-	if payload.Metadata.TraceContext != nil {
-		protoTraceContext = &protobuf.TraceContext{
-			TraceId:       payload.Metadata.TraceContext.TraceId,
-			SpanId:        payload.Metadata.TraceContext.SpanId,
-			TraceFlags:    payload.Metadata.TraceContext.TraceFlags,
-			TraceState:    payload.Metadata.TraceContext.TraceState,
-			CorrelationId: payload.Metadata.TraceContext.CorrelationId,
-		}
-	}
-
 	req := &protobuf.HashDataRequest{
-		Profile: payload.Profile,
-		Input:   payload.Input,
-		Metadata: &protobuf.Metadata{
-			Id:           payload.Metadata.Id,
-			TraceContext: protoTraceContext,
-		},
+		Profile:  payload.Profile,
+		Input:    payload.Input,
+		Metadata: newProtoMetadata(payload.Metadata),
 	}
 
 	switch payload.OutputFormat {

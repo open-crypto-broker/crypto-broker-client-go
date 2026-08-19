@@ -24,6 +24,16 @@ func (m *mockedGRPCClient) SignCertificate(ctx context.Context, in *protobuf.Sig
 	return args.Get(0).(*protobuf.SignCertificateResponse), args.Error(1)
 }
 
+func (m *mockedGRPCClient) EncryptData(ctx context.Context, in *protobuf.EncryptDataRequest, opts ...grpc.CallOption) (*protobuf.EncryptDataResponse, error) {
+	args := m.Called(ctx, in)
+	return args.Get(0).(*protobuf.EncryptDataResponse), args.Error(1)
+}
+
+func (m *mockedGRPCClient) DecryptData(ctx context.Context, in *protobuf.DecryptDataRequest, opts ...grpc.CallOption) (*protobuf.DecryptDataResponse, error) {
+	args := m.Called(ctx, in)
+	return args.Get(0).(*protobuf.DecryptDataResponse), args.Error(1)
+}
+
 // Mocked client for grpc dev service
 type mockedGRPCDevClient struct {
 	mock.Mock
