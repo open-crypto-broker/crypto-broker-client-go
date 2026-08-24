@@ -17,6 +17,7 @@ type KeySource struct {
 }
 
 type EncryptDataPayload struct {
+
 	// Profile is one of the cryptographic profiles supported by Crypto Broker.
 	Profile string
 
@@ -61,6 +62,7 @@ func (source KeySource) toProto() (*protobuf.KeySource, error) {
 	if hasKeyID == hasRawKey {
 		return nil, ErrInvalidKeySource
 	}
+
 	if hasKeyID {
 		return &protobuf.KeySource{Source: &protobuf.KeySource_KeyId{KeyId: source.KeyID}}, nil
 	}
