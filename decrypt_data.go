@@ -7,6 +7,7 @@ import (
 )
 
 type DecryptDataPayload struct {
+
 	// Profile is one of the cryptographic profiles supported by Crypto Broker.
 	Profile string
 
