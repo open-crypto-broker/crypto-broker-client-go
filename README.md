@@ -39,7 +39,6 @@ payload := cryptobrokerclientgo.HashDataPayload{
   OutputFormat: cryptobrokerclientgo.OutputFormatHex,
   Metadata: &cryptobrokerclientgo.Metadata{
     Id:        uuid.New().String(),
-    CreatedAt: time.Now().UTC().Format(time.RFC3339),
   },
 }
 
@@ -60,7 +59,6 @@ payload = cryptobrokerclientgo.SignCertificatePayload{
   OutputFormat: cryptobrokerclientgo.OutputFormatPem,
   Metadata: &cryptobrokerclientgo.Metadata{
     Id:        uuid.New().String(),
-    CreatedAt: time.Now().UTC().Format(time.RFC3339),
   },
 }
 
