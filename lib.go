@@ -93,6 +93,10 @@ func NewLibrary(ctx context.Context, configs ...any) (*Library, error) {
 			retry,
 			breaker,
 		),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallSendMsgSize(int(protobuf.MessageSizeLimit_MESSAGE_SIZE_LIMIT_MAX_REQUEST_BYTES)),
+			grpc.MaxCallRecvMsgSize(int(protobuf.MessageSizeLimit_MESSAGE_SIZE_LIMIT_MAX_RESPONSE_BYTES)),
+		),
 	)
 
 	if err != nil {
