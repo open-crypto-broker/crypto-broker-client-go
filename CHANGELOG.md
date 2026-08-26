@@ -3,6 +3,22 @@
 The list of commits in this changelog is automatically generated in the release process.
 The commits follow the Conventional Commit specification.
 
+## [0.5.0] - 2026-08-26
+
+### 🚀 Features
+
+- Used message size limits from proto (#87)
+- Upgrade go to version 1.27 (#88)
+- Updated proto definition
+- Updated deps and minimum go version
+- Implemented encrypt and decrypt data funcs, extracted common code to metadata.go
+- Added boilerplate code + updated mock
+- Updated proto reference and regenerated proto stubs
+
+### 🐛 Bug Fixes
+
+- Update README (#86)
+
 ## [0.4.2] - 2026-08-14
 
 ### 🚀 Features
