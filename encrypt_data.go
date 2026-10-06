@@ -43,6 +43,9 @@ func (lib *Library) EncryptData(ctx context.Context, payload EncryptDataPayload)
 	if err != nil {
 		return nil, err
 	}
+	if err := validateEncryptDataPayload(payload); err != nil {
+		return nil, err
+	}
 
 	return lib.client.EncryptData(ctx, &protobuf.EncryptDataRequest{
 		Profile:   payload.Profile,

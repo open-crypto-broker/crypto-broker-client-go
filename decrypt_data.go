@@ -36,6 +36,9 @@ func (lib *Library) DecryptData(ctx context.Context, payload DecryptDataPayload)
 	if err != nil {
 		return nil, err
 	}
+	if err := validateDecryptDataPayload(payload); err != nil {
+		return nil, err
+	}
 
 	return lib.client.DecryptData(ctx, &protobuf.DecryptDataRequest{
 		Profile:    payload.Profile,

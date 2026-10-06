@@ -56,6 +56,10 @@ var ErrInvalidSignOutputFormat = fmt.Errorf("invalid sign output format, must be
 // As result it returns signed x509 certificate or non-nil error if any.
 // Please familiarize yourself with the encoding options before using this method.
 func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificatePayload) (*protobuf.SignCertificateResponse, error) {
+	if err := validateSignCertificatePayload(payload); err != nil {
+		return nil, err
+	}
+
 	req := &protobuf.SignCertificateRequest{
 		Profile:               payload.Profile,
 		Csr:                   string(payload.CSR),
