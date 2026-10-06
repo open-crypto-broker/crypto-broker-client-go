@@ -35,6 +35,10 @@ type HashDataPayload struct {
 // HashData performs logic that results in hashing provided bytes using crypto broker.
 // As result it returns hash of provided bytes and non-nil error if any.
 func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*protobuf.HashDataResponse, error) {
+	if err := validateHashDataPayload(payload); err != nil {
+		return nil, err
+	}
+
 	req := &protobuf.HashDataRequest{
 		Profile:  payload.Profile,
 		Input:    payload.Input,
