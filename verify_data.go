@@ -22,6 +22,9 @@ func (lib *Library) VerifyData(ctx context.Context, payload VerifyDataPayload) (
 	if err != nil {
 		return nil, err
 	}
+	if err := validateVerifyDataPayload(payload); err != nil {
+		return nil, err
+	}
 
 	return lib.client.VerifyData(ctx, &protobuf.VerifyDataRequest{
 		Profile:         payload.Profile,
