@@ -41,6 +41,9 @@ func (lib *Library) SignData(ctx context.Context, payload SignDataPayload) (*pro
 	if err != nil {
 		return nil, err
 	}
+	if err := validateSignDataPayload(payload); err != nil {
+		return nil, err
+	}
 
 	return lib.client.SignData(ctx, &protobuf.SignDataRequest{
 		Profile:         payload.Profile,
