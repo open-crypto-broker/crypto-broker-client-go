@@ -12,6 +12,60 @@ import (
 	"google.golang.org/grpc"
 )
 
+func TestLibrary_SignCertificateCertificateSource(t *testing.T) {
+	tests := []struct {
+		name      string
+		caCert    []byte
+		keySource *KeySource
+		wantKeyID string
+	}{
+		{
+			name:      "KMS certificate ID",
+			keySource: &KeySource{KeyID: "ca-certificate"},
+			wantKeyID: "ca-certificate",
+		},
+		{
+			name:   "legacy CACert without KeySource",
+			caCert: []byte("raw CA certificate"),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client := &mockedGRPCClient{}
+			want := &protobuf.SignCertificateResponse{}
+
+			client.On("SignCertificate", mock.Anything, mock.MatchedBy(func(req *protobuf.SignCertificateRequest) bool {
+				return req.GetCaCert() == string(test.caCert) &&
+					(req.GetKeySource() == nil) == (test.keySource == nil) &&
+					req.GetKeySource().GetKeyId() == test.wantKeyID &&
+					len(req.GetKeySource().GetRawKey()) == 0 &&
+					req.GetProfile() == "Default" &&
+					req.GetCsr() == "CSR" &&
+					req.GetCaPrivateKey() == "CA private key"
+			})).Return(want, nil).Once()
+
+			got, err := (&Library{client: client}).SignCertificate(context.Background(), SignCertificatePayload{
+				Profile:      "Default",
+				CSR:          []byte("CSR"),
+				CAPrivateKey: []byte("CA private key"),
+				CACert:       test.caCert,
+				KeySource:    test.keySource,
+				OutputFormat: OutputFormatPem,
+			})
+
+			if err != nil {
+				t.Fatalf("SignCertificate() error = %v", err)
+			}
+
+			if got != want {
+				t.Fatalf("SignCertificate() response = %p, want %p", got, want)
+			}
+
+			client.AssertExpectations(t)
+		})
+	}
+}
+
 func TestLibrary_SignCertificate(t *testing.T) {
 	mockedClient := &mockedGRPCClient{}
 	zeroTime := time.Time{}
