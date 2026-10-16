@@ -31,6 +31,9 @@ type SignCertificatePayload struct {
 	// CACert CA Certificate's raw bytes in PEM format
 	CACert []byte
 
+	// KeySource optionally selects a KMS certificate or raw PEM bytes instead of CACert.
+	KeySource *KeySource
+
 	// (Optional) ValidNotBefore timestamp for notBefore validity field
 	ValidNotBefore *time.Time
 
@@ -64,6 +67,20 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 		Subject:               payload.Subject,
 		CrlDistributionPoints: payload.CrlDistributionPoints,
 		Metadata:              newProtoMetadata(payload.Metadata),
+	}
+
+	// Checking KeySource
+	if payload.KeySource != nil {
+		if len(payload.CACert) != 0 {
+			return nil, fmt.Errorf("KeySource must not be set together with CACert")
+		}
+
+		keySource, err := payload.KeySource.toProto()
+		if err != nil {
+			return nil, err
+		}
+
+		req.KeySource = keySource
 	}
 
 	switch payload.OutputFormat {
