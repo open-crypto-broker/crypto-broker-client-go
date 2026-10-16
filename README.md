@@ -48,12 +48,13 @@ if err != nil {
 }
 fmt.Printf("Hashed string: %s\n", responseBody.hashValue)
 
-// Signing
-payload = cryptobrokerclientgo.SignCertificatePayload{
-  Profile:      Profile,
-  CSR:          rawContentCSR,
-  CAPrivateKey: rawContentSigningKey,
-  CACert:       rawContentCACert,
+// Sign a certificate with caller-provided key material.
+rawSigningKey := cryptobrokerclientgo.KeySource{RawKey: rawContentSigningKey}
+signCertificatePayload := cryptobrokerclientgo.SignCertificatePayload{
+  Profile:   Profile,
+  CSR:       rawContentCSR,
+  KeySource: cryptobrokerclientgo.SignKeySource{Single: &rawSigningKey},
+  CACert:    rawContentCACert,
   CrlDistributionPoints: crlDistributionPoints,
   Subject:      &customSubject,
   OutputFormat: cryptobrokerclientgo.OutputFormatPem,
@@ -62,11 +63,27 @@ payload = cryptobrokerclientgo.SignCertificatePayload{
   },
 }
 
-responseBody, err := lib.SignCertificate(ctx, payload)
+signCertificateResponse, err := lib.SignCertificate(ctx, signCertificatePayload)
 if err != nil {
   panic(err)
 }
-fmt.Printf("Signed certificate: %s\n", responseBody.signedCertificate)
+fmt.Printf("Signed certificate: %s\n", signCertificateResponse.GetPem())
+
+// Sign a certificate with a KMS-managed private key and CA certificate.
+// CACert must be omitted because the server retrieves it from KMS using KeyID.
+kmsSigningKey := cryptobrokerclientgo.KeySource{KeyID: "ca-signing-key"}
+kmsSignCertificatePayload := cryptobrokerclientgo.SignCertificatePayload{
+  Profile:      Profile,
+  CSR:          rawContentCSR,
+  KeySource:    cryptobrokerclientgo.SignKeySource{Single: &kmsSigningKey},
+  OutputFormat: cryptobrokerclientgo.OutputFormatPem,
+}
+
+kmsSignCertificateResponse, err := lib.SignCertificate(ctx, kmsSignCertificatePayload)
+if err != nil {
+  panic(err)
+}
+fmt.Printf("KMS-signed certificate: %s\n", kmsSignCertificateResponse.GetPem())
 ```
 
 ## Custom Configurations

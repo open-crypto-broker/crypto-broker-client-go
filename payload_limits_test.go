@@ -78,9 +78,20 @@ func TestValidatePayloadLimits(t *testing.T) {
 			},
 		},
 		{
-			name: "certificate authority private key",
+			name: "certificate signing raw key",
 			validate: func() error {
-				return validateSignCertificatePayload(SignCertificatePayload{CAPrivateKey: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN)+1)})
+				key := KeySource{RawKey: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN)+1)}
+				return validateSignCertificatePayload(SignCertificatePayload{
+					KeySource: SignKeySource{Single: &key},
+					CACert:    []byte("CA certificate"),
+				})
+			},
+		},
+		{
+			name: "certificate signing KMS key ID",
+			validate: func() error {
+				key := KeySource{KeyID: strings.Repeat("a", int(protobuf.PayloadLimits_PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_ID_MAX_LEN)+1)}
+				return validateSignCertificatePayload(SignCertificatePayload{KeySource: SignKeySource{Single: &key}})
 			},
 		},
 		{

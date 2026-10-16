@@ -49,7 +49,7 @@ func TestLibrary_SignCertificate(t *testing.T) {
 			},
 			args: args{
 				ctx:     context.TODO(),
-				payload: SignCertificatePayload{OutputFormat: OutputFormatPem},
+				payload: SignCertificatePayload{OutputFormat: OutputFormatPem, KeySource: testCertificateSignKeySource(), CACert: []byte("CA certificate")},
 			},
 			want: &protobuf.SignCertificateResponse{
 				SignedCertificate: &protobuf.SignCertificateResponse_Pem{Pem: "-----BEGIN CERTIFICATE-----\nMIICaDCCAe6gAwIBAgIUHereBfzbYtrts/fQz5amVRJeNkwwCgYIKoZIzj0EAwQw\ngYYxCzAJBgNVBAYTAkRFMRAwDgYDVQQIDAdCYXZhcmlhMRowGAYDVQQKDBFUZXN0\nLU9yZ2FuaXphdGlvbjEdMBsGA1UECwwUVGVzdC1Pcmdhbml6YXRpb24tQ0ExKjAo\nBgNVBAMMIVRlc3QtT3JnYW5pemF0aW9uLUludGVybWVkaWF0ZS1DQTAeFw0yNTA5\nMTYxMTM1NTFaFw0yNjA5MTYxMjM1NTFaMEwxCzAJBgNVBAYTAkRFMQswCQYDVQQI\nEwJCQTEMMAoGA1UEChMDU0FQMQ8wDQYDVQQDEwZNeUNlcnQxETAPBgNVBAUTCDAx\nMjM0NTU2MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEgLWqYJmgsXLUJLta6oIOykuz\nGNz76VMZj+wcfb9+MZA5A/WSfPVk9/JigQOfF49JcOI1Wb+gIfq1TNAkK/xOMTjf\npxXeYglrFW/e278Q3TbYvhEHI3kOgIUJDbhSvRn/o1YwVDAOBgNVHQ8BAf8EBAMC\nBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAfBgNVHSMEGDAW\ngBT3KuJBMgQEcYrmI1TyGOb0P2/P3zAKBggqhkjOPQQDBANoADBlAjEAysok6BwR\nmNOrt4UeBpw2NF87xuoek/dF9lXOalpXtp+cXHjgigcWmguT48ve29CmAjBNir0W\ns4SQBr9PwtCbILoLwMihfkqIjjib63+q30YpW6nghOlKv2iI1Yobd05HBH8=\n-----END CERTIFICATE-----\n"},
@@ -71,7 +71,7 @@ func TestLibrary_SignCertificate(t *testing.T) {
 			},
 			args: args{
 				ctx:     context.TODO(),
-				payload: SignCertificatePayload{OutputFormat: OutputFormatDer},
+				payload: SignCertificatePayload{OutputFormat: OutputFormatDer, KeySource: testCertificateSignKeySource(), CACert: []byte("CA certificate")},
 			},
 			want: &protobuf.SignCertificateResponse{
 				SignedCertificate: &protobuf.SignCertificateResponse_Der{Der: []byte{0x30, 0x82, 0x01, 0x0a, 0x02, 0x82, 0x01, 0x01, 0x00, 0xc3, 0x50, 0x4b, 0x03, 0x04}},
@@ -90,7 +90,7 @@ func TestLibrary_SignCertificate(t *testing.T) {
 			},
 			args: args{
 				ctx:     context.TODO(),
-				payload: SignCertificatePayload{},
+				payload: SignCertificatePayload{OutputFormat: OutputFormatDer, KeySource: testCertificateSignKeySource(), CACert: []byte("CA certificate")},
 			},
 			want:    nil,
 			wantErr: true,
@@ -103,8 +103,12 @@ func TestLibrary_SignCertificate(t *testing.T) {
 			},
 			mockFunc: func() {},
 			args: args{
-				ctx:     context.TODO(),
-				payload: SignCertificatePayload{OutputFormat: OutputFormatSign(20)},
+				ctx: context.TODO(),
+				payload: SignCertificatePayload{
+					OutputFormat: OutputFormatSign(20),
+					KeySource:    testCertificateSignKeySource(),
+					CACert:       []byte("CA certificate"),
+				},
 			},
 			want:    nil,
 			wantErr: true,
@@ -123,6 +127,9 @@ func TestLibrary_SignCertificate(t *testing.T) {
 				payload: SignCertificatePayload{
 					ValidNotBefore: &zeroTime,
 					ValidNotAfter:  &currentTime,
+					OutputFormat:   OutputFormatPem,
+					KeySource:      testCertificateSignKeySource(),
+					CACert:         []byte("CA certificate"),
 				},
 			},
 			want:    nil,
@@ -142,6 +149,9 @@ func TestLibrary_SignCertificate(t *testing.T) {
 				payload: SignCertificatePayload{
 					ValidNotBefore: &currentTime,
 					ValidNotAfter:  &zeroTime,
+					OutputFormat:   OutputFormatPem,
+					KeySource:      testCertificateSignKeySource(),
+					CACert:         []byte("CA certificate"),
 				},
 			},
 			want:    nil,
@@ -167,4 +177,93 @@ func TestLibrary_SignCertificate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLibrary_SignCertificateUsesSignKeySource(t *testing.T) {
+	tests := []struct {
+		name      string
+		keySource KeySource
+		caCert    []byte
+		matches   func(*protobuf.SignCertificateRequest) bool
+	}{
+		{
+			name:      "raw PEM or DER key bytes",
+			keySource: KeySource{RawKey: []byte("private-key")},
+			caCert:    []byte("CA certificate"),
+			matches: func(req *protobuf.SignCertificateRequest) bool {
+				return string(req.GetKeySource().GetSingle().GetRawKey()) == "private-key" &&
+					req.GetCaCert() == "CA certificate"
+			},
+		},
+		{
+			name:      "KMS key ID",
+			keySource: KeySource{KeyID: "ca-signing-key"},
+			matches: func(req *protobuf.SignCertificateRequest) bool {
+				return req.GetKeySource().GetSingle().GetKeyId() == "ca-signing-key" &&
+					req.GetCaCert() == ""
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client := &mockedGRPCClient{}
+			client.On("SignCertificate", mock.Anything, mock.MatchedBy(test.matches)).
+				Return(&protobuf.SignCertificateResponse{}, nil).Once()
+			library := &Library{client: client, conn: &grpc.ClientConn{}}
+
+			_, err := library.SignCertificate(context.Background(), SignCertificatePayload{
+				KeySource:    SignKeySource{Single: &test.keySource},
+				CACert:       test.caCert,
+				OutputFormat: OutputFormatDer,
+			})
+			if err != nil {
+				t.Fatalf("SignCertificate() error = %v", err)
+			}
+			client.AssertExpectations(t)
+		})
+	}
+}
+
+func TestLibrary_SignCertificateRejectsInvalidSigningMaterial(t *testing.T) {
+	tests := []struct {
+		name      string
+		keySource SignKeySource
+		caCert    []byte
+	}{
+		{
+			name:      "raw key without CA certificate",
+			keySource: SignKeySource{Single: &KeySource{RawKey: []byte("private-key")}},
+		},
+		{
+			name:      "KMS key ID with CA certificate",
+			keySource: SignKeySource{Single: &KeySource{KeyID: "ca-signing-key"}},
+			caCert:    []byte("CA certificate"),
+		},
+		{
+			name: "component keys",
+			keySource: SignKeySource{ComponentKeys: []KeySource{
+				{RawKey: []byte("private-key")},
+			}},
+			caCert: []byte("CA certificate"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := (&Library{client: &mockedGRPCClient{}}).SignCertificate(context.Background(), SignCertificatePayload{
+				KeySource:    test.keySource,
+				CACert:       test.caCert,
+				OutputFormat: OutputFormatDer,
+			})
+			if err == nil {
+				t.Fatal("SignCertificate() error = nil, want validation error")
+			}
+		})
+	}
+}
+
+func testCertificateSignKeySource() SignKeySource {
+	key := KeySource{RawKey: []byte("private key")}
+	return SignKeySource{Single: &key}
 }
