@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 	"github.com/open-crypto-broker/crypto-broker-client-go/internal/interceptor"
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -36,8 +36,8 @@ var (
 
 // Library implements convenient facade to work with crypto broker
 type Library struct {
-	client       protobuf.CryptoGrpcClient
-	development  protobuf.CryptoGrpcDevClient
+	client       protobuf.CryptoServiceClient
+	development  protobuf.CryptoDevServiceClient
 	healthClient grpc_health_v1.HealthClient
 	conn         *grpc.ClientConn
 }
@@ -104,7 +104,7 @@ func NewLibrary(ctx context.Context, configs ...any) (*Library, error) {
 	}
 
 	lib := &Library{
-		client:       protobuf.NewCryptoGrpcClient(conn),
+		client:       protobuf.NewCryptoServiceClient(conn),
 		healthClient: grpc_health_v1.NewHealthClient(conn),
 		conn:         conn,
 	}

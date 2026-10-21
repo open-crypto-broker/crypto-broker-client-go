@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 )
 
 type OutputFormatHash protobuf.HashOutputFormat
 
 const (
-	OutputFormatRaw OutputFormatHash = OutputFormatHash(protobuf.HashOutputFormat_RAW)
-	OutputFormatHex OutputFormatHash = OutputFormatHash(protobuf.HashOutputFormat_HEX)
+	OutputFormatRaw OutputFormatHash = OutputFormatHash(protobuf.HashOutputFormat_HASH_OUTPUT_FORMAT_RAW)
+	OutputFormatHex OutputFormatHash = OutputFormatHash(protobuf.HashOutputFormat_HASH_OUTPUT_FORMAT_HEX)
 )
 
 var ErrInvalidHashOutputFormat = fmt.Errorf("invalid hash output format, must be either %v or %v", OutputFormatRaw, OutputFormatHex)
@@ -47,9 +47,9 @@ func (lib *Library) HashData(ctx context.Context, payload HashDataPayload) (*pro
 
 	switch payload.OutputFormat {
 	case OutputFormatRaw:
-		req.OutputFormat = protobuf.HashOutputFormat_RAW
+		req.OutputFormat = protobuf.HashOutputFormat_HASH_OUTPUT_FORMAT_RAW
 	case OutputFormatHex:
-		req.OutputFormat = protobuf.HashOutputFormat_HEX
+		req.OutputFormat = protobuf.HashOutputFormat_HASH_OUTPUT_FORMAT_HEX
 	default:
 		return nil, ErrInvalidHashOutputFormat
 	}

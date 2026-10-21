@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -17,7 +17,7 @@ func TestSignData(t *testing.T) {
 		return request.GetProfile() == "Default" &&
 			string(request.GetInput()) == "document" &&
 			string(request.GetKeySource().GetSingle().GetRawKey()) == "private key" &&
-			request.SignatureFormat == nil
+			request.GetSignatureFormat() == protobuf.SignatureFormat_SIGNATURE_FORMAT_UNSPECIFIED
 	})).Return(&protobuf.SignDataResponse{Signature: []byte("signature")}, nil).Once()
 
 	response, err := lib.SignData(context.Background(), SignDataPayload{

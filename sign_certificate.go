@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 )
 
 type OutputFormatSign protobuf.SignOutputFormat
 
 const (
-	OutputFormatDer OutputFormatSign = OutputFormatSign(protobuf.SignOutputFormat_DER)
-	OutputFormatPem OutputFormatSign = OutputFormatSign(protobuf.SignOutputFormat_PEM)
+	OutputFormatDer OutputFormatSign = OutputFormatSign(protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER)
+	OutputFormatPem OutputFormatSign = OutputFormatSign(protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM)
 )
 
 // SigningOpts defines data that need to be provided in order to invoke signing of a certificate.
@@ -72,9 +72,9 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 
 	switch payload.OutputFormat {
 	case OutputFormatDer:
-		req.OutputFormat = protobuf.SignOutputFormat_DER
+		req.OutputFormat = protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER
 	case OutputFormatPem:
-		req.OutputFormat = protobuf.SignOutputFormat_PEM
+		req.OutputFormat = protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM
 	default:
 		return nil, ErrInvalidSignOutputFormat
 	}

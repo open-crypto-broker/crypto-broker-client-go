@@ -3,7 +3,7 @@ package cryptobrokerclientgo
 import (
 	"context"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
