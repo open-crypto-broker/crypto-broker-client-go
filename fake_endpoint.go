@@ -3,7 +3,7 @@ package cryptobrokerclientgo
 import (
 	"context"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 )
 
 // FakeEndpointPayload defines all required data that need to be provided in order to invoke fake endpoint.
