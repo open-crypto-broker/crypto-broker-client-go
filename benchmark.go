@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 )
 
 // BenchmarkDataPayload defines input for invoking server-side benchmarks.

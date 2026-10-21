@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 )
 
 // ErrPayloadLimitExceeded indicates that a request field exceeds its protobuf-defined limit.

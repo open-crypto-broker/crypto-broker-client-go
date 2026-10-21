@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 )
 
 var ErrInvalidKeySource = errors.New("exactly one of raw key or key ID must be provided")
