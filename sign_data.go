@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 )
 
 var ErrInvalidSignKeySource = errors.New("exactly one of a single key or component keys must be provided")
@@ -20,10 +20,10 @@ type SignKeySource struct {
 type SignatureFormat int32
 
 const (
-	SignatureFormatRaw SignatureFormat = SignatureFormat(protobuf.SignatureFormat_SIGNATURE_RAW)
-	SignatureFormatDER SignatureFormat = SignatureFormat(protobuf.SignatureFormat_SIGNATURE_DER)
-	SignatureFormatPEM SignatureFormat = SignatureFormat(protobuf.SignatureFormat_SIGNATURE_PEM)
-	SignatureFormatCMS SignatureFormat = SignatureFormat(protobuf.SignatureFormat_SIGNATURE_CMS)
+	SignatureFormatRaw SignatureFormat = SignatureFormat(protobuf.SignatureFormat_SIGNATURE_FORMAT_RAW)
+	SignatureFormatDER SignatureFormat = SignatureFormat(protobuf.SignatureFormat_SIGNATURE_FORMAT_DER)
+	SignatureFormatPEM SignatureFormat = SignatureFormat(protobuf.SignatureFormat_SIGNATURE_FORMAT_PEM)
+	SignatureFormatCMS SignatureFormat = SignatureFormat(protobuf.SignatureFormat_SIGNATURE_FORMAT_CMS)
 )
 
 // SignDataPayload contains an arbitrary payload and its signing configuration.
@@ -83,10 +83,10 @@ func (source SignKeySource) toProto() (*protobuf.SignKeySource, error) {
 	}}, nil
 }
 
-func (format *SignatureFormat) toProto() *protobuf.SignatureFormat {
+func (format *SignatureFormat) toProto() protobuf.SignatureFormat {
 	if format == nil {
-		return nil
+		return protobuf.SignatureFormat_SIGNATURE_FORMAT_UNSPECIFIED
 	}
 	value := protobuf.SignatureFormat(*format)
-	return &value
+	return value
 }

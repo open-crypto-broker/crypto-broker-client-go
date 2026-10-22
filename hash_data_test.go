@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
@@ -21,7 +21,7 @@ func TestLibrary_HashData(t *testing.T) {
 
 	type mockFunc func()
 	type fields struct {
-		client protobuf.CryptoGrpcClient
+		client protobuf.CryptoServiceClient
 		conn   *grpc.ClientConn
 	}
 	type args struct {
@@ -44,8 +44,10 @@ func TestLibrary_HashData(t *testing.T) {
 			},
 			mockFunc: func() {
 				resp := &protobuf.HashDataResponse{
-					HashValue:     &protobuf.HashDataResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
-					HashAlgorithm: "sha3-512",
+					HashValue: &protobuf.HashDataResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
+					Descriptor_: &protobuf.CryptoDescriptor{
+						Algorithm: "sha3-512",
+					},
 				}
 				mockedClient.On("HashData", mock.Anything, mock.Anything).
 					Return(resp, nil).Once()
@@ -58,11 +60,14 @@ func TestLibrary_HashData(t *testing.T) {
 					Metadata: &Metadata{
 						Id: "123",
 					},
+					OutputFormat: OutputFormatHash(protobuf.HashOutputFormat_HASH_OUTPUT_FORMAT_HEX),
 				},
 			},
 			want: &protobuf.HashDataResponse{
-				HashValue:     &protobuf.HashDataResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
-				HashAlgorithm: "sha3-512",
+				HashValue: &protobuf.HashDataResponse_HashValueHex{HashValueHex: "840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a"},
+				Descriptor_: &protobuf.CryptoDescriptor{
+					Algorithm: "sha3-512",
+				},
 			},
 			wantErr: false,
 		},
@@ -74,8 +79,10 @@ func TestLibrary_HashData(t *testing.T) {
 			},
 			mockFunc: func() {
 				resp := &protobuf.HashDataResponse{
-					HashValue:     &protobuf.HashDataResponse_HashValueRaw{HashValueRaw: rawDigest},
-					HashAlgorithm: "sha3-256",
+					HashValue: &protobuf.HashDataResponse_HashValueRaw{HashValueRaw: rawDigest},
+					Descriptor_: &protobuf.CryptoDescriptor{
+						Algorithm: "sha3-256",
+					},
 				}
 				mockedClient.On("HashData", mock.Anything, mock.Anything).
 					Return(resp, nil).Once()
@@ -92,8 +99,10 @@ func TestLibrary_HashData(t *testing.T) {
 				},
 			},
 			want: &protobuf.HashDataResponse{
-				HashValue:     &protobuf.HashDataResponse_HashValueRaw{HashValueRaw: rawDigest},
-				HashAlgorithm: "sha3-256",
+				HashValue: &protobuf.HashDataResponse_HashValueRaw{HashValueRaw: rawDigest},
+				Descriptor_: &protobuf.CryptoDescriptor{
+					Algorithm: "sha3-256",
+				},
 			},
 			wantErr: false,
 		},
@@ -115,6 +124,7 @@ func TestLibrary_HashData(t *testing.T) {
 					Metadata: &Metadata{
 						Id: "123",
 					},
+					OutputFormat: OutputFormatHash(protobuf.HashOutputFormat_HASH_OUTPUT_FORMAT_HEX),
 				},
 			},
 			want:    &protobuf.HashDataResponse{},

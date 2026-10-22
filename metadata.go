@@ -3,7 +3,7 @@ package cryptobrokerclientgo
 import (
 	"github.com/google/uuid"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 )
 
 // TraceContext carries tracing fields propagated to Crypto Broker.

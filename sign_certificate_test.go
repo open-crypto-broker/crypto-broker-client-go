@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-crypto-broker/crypto-broker-client-go/internal/protobuf"
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
@@ -19,7 +19,7 @@ func TestLibrary_SignCertificate(t *testing.T) {
 
 	type mockFunc func()
 	type fields struct {
-		client protobuf.CryptoGrpcClient
+		client protobuf.CryptoServiceClient
 		conn   *grpc.ClientConn
 	}
 	type args struct {
