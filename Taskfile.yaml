@@ -50,7 +50,7 @@ tasks:
   proto-update:
     desc: "Updates the protobuf submodule to the latest upstream schema and regenerates"
     cmds:
-      - git submodule update --remote protobuf/
+      - git submodule update --init --remote protobuf/
       - task: proto
 
   proto:
