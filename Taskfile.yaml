@@ -21,15 +21,11 @@ tasks:
     cmds:
       - buf --version && protoc-gen-go --version && govulncheck --version && golangci-lint --version
 
-  # Installed via go install rather than brew so that every platform gets the
-  # pinned version.
   install-buf:
     desc: "Download and install the buf CLI"
     cmds:
       - go install github.com/bufbuild/buf/cmd/buf@v{{.BUF_VERSION}}
 
-  # Installed via go install rather than brew so that generated stubs are
-  # reproducible across macOS, Linux and CI.
   install-go-protoc-modules:
     desc: "Install Go modules for protobuf and gRPC support"
     cmds:
