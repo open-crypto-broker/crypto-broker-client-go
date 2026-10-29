@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 )
 
@@ -40,6 +43,12 @@ func TestLibrary_BenchmarkData(t *testing.T) {
 			mockFunc: func() {
 				resp := &protobuf.BenchmarkResponse{BenchmarkResults: `{"results":[{"name":"BenchmarkLibraryNative_HashSHA3_256","avgTime":12345},{"name":"BenchmarkLibraryNative_SignCertificate_NIST_SECP521R1_RSA4096","avgTime":67890}]}`}
 				mockedClient.On("Benchmark", mock.Anything, mock.Anything).
+					Run(func(args mock.Arguments) {
+						id, err := uuid.Parse(args.Get(1).(*protobuf.BenchmarkRequest).GetMetadata().GetId())
+						require.NoError(t, err)
+						require.Equal(t, uuid.Version(4), id.Version())
+						require.Equal(t, uuid.RFC4122, id.Variant())
+					}).
 					Return(resp, nil).Once()
 			},
 			args: args{
@@ -97,6 +106,7 @@ func TestLibrary_BenchmarkData(t *testing.T) {
 			}
 
 			tt.mockFunc()
+			t.Cleanup(func() { mockedClient.AssertExpectations(t) })
 
 			got, err := lib.BenchmarkData(tt.args.ctx, tt.args.payload)
 			if (err != nil) != tt.wantErr {
@@ -108,4 +118,15 @@ func TestLibrary_BenchmarkData(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLibrary_BenchmarkRejectsInvalidMetadata(t *testing.T) {
+	client := &mockedGRPCDevClient{}
+	client.On("Benchmark", mock.Anything, mock.Anything).Return(&protobuf.BenchmarkResponse{BenchmarkResults: `{"results":[]}`}, nil)
+	response, err := (&Library{development: client}).BenchmarkData(context.Background(), BenchmarkDataPayload{
+		Metadata: &Metadata{Id: strings.Repeat("A", int(protobuf.PayloadLimits_PAYLOAD_LIMITS_METADATA_ID_MAX_LEN)+1)},
+	})
+	client.AssertNotCalled(t, "Benchmark", mock.Anything, mock.Anything)
+	require.ErrorContains(t, err, "metadata.id")
+	require.Nil(t, response)
 }

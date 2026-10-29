@@ -54,8 +54,14 @@ func validateMetadataPayload(metadata *Metadata) error {
 }
 
 func validateHashDataPayload(payload HashDataPayload) error {
+	if payload.Profile == "" {
+		return fmt.Errorf("profile: required")
+	}
 	if err := validateProfilePayload(payload.Profile); err != nil {
 		return err
+	}
+	if payload.Input == nil {
+		return fmt.Errorf("input: required (use a non-nil empty slice to hash empty data)")
 	}
 	if err := checkPayloadLimit("input", len(payload.Input), protobuf.PayloadLimits_PAYLOAD_LIMITS_HASH_DATA_INPUT_MAX_LEN); err != nil {
 		return err
@@ -65,6 +71,9 @@ func validateHashDataPayload(payload HashDataPayload) error {
 }
 
 func validateSignCertificatePayload(payload SignCertificatePayload) error {
+	if payload.Profile == "" {
+		return fmt.Errorf("profile: required")
+	}
 	if err := validateProfilePayload(payload.Profile); err != nil {
 		return err
 	}
@@ -78,6 +87,9 @@ func validateSignCertificatePayload(payload SignCertificatePayload) error {
 		{"caCert", len(payload.CACert), protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_CERT_MAX_LEN},
 	}
 	for _, field := range fields {
+		if field.value == 0 {
+			return fmt.Errorf("%s: required", field.name)
+		}
 		if err := checkPayloadLimit(field.name, field.value, field.limit); err != nil {
 			return err
 		}
