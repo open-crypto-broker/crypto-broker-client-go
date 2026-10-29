@@ -30,6 +30,9 @@ type BenchmarkResults struct {
 // For now, the server encodes results as a JSON string inside the protobuf response. This method
 // decodes that JSON into typed Go structs for convenience.
 func (lib *Library) BenchmarkData(ctx context.Context, payload BenchmarkDataPayload) (*BenchmarkResults, error) {
+	if err := validateMetadataPayload(payload.Metadata); err != nil {
+		return nil, err
+	}
 	req := &protobuf.BenchmarkRequest{
 		Metadata: newProtoMetadata(payload.Metadata),
 	}
