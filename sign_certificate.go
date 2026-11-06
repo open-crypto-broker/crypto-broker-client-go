@@ -15,9 +15,10 @@ const (
 	OutputFormatPem OutputFormatSign = OutputFormatSign(protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM)
 )
 
-// SigningOpts defines data that need to be provided in order to invoke signing of a certificate.
-// The profile, CSR, Private Key and CA are mandatory, while the rest are optional. Optional fields
-// will be either left empty or be taken from the Profile
+// SignCertificatePayload defines data required to sign a certificate.
+// Profile, CSR and KeySource are mandatory. CACert is required with a raw
+// signing key and must be empty with a KMS key ID. Other optional fields are
+// either left empty or taken from the profile.
 type SignCertificatePayload struct {
 	// Profile one of supported by crypto broker cryptogaphic profiles
 	Profile string
@@ -25,10 +26,11 @@ type SignCertificatePayload struct {
 	// CSR certificate signing request's raw bytes in PEM format
 	CSR []byte
 
-	// CAPrivateKey signing key's raw bytes in PEM format
-	CAPrivateKey []byte
+	// KeySource contains either a raw PEM/DER signing key or a KMS key ID.
+	KeySource SignKeySource
 
-	// CACert CA Certificate's raw bytes in PEM format
+	// CACert contains the CA certificate in PEM format when KeySource contains a raw key.
+	// It must be empty when KeySource contains a KMS key ID because KMS provides the certificate.
 	CACert []byte
 
 	// (Optional) ValidNotBefore timestamp for notBefore validity field
@@ -56,15 +58,20 @@ var ErrInvalidSignOutputFormat = fmt.Errorf("invalid sign output format, must be
 // As result it returns signed x509 certificate or non-nil error if any.
 // Please familiarize yourself with the encoding options before using this method.
 func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificatePayload) (*protobuf.SignCertificateResponse, error) {
-	if err := validateSignCertificatePayload(payload); err != nil {
+	keySource, err := payload.KeySource.toProto()
+	if err != nil {
+		return nil, err
+	}
+	err = validateSignCertificatePayload(payload)
+	if err != nil {
 		return nil, err
 	}
 
 	req := &protobuf.SignCertificateRequest{
 		Profile:               payload.Profile,
 		Csr:                   string(payload.CSR),
-		CaPrivateKey:          string(payload.CAPrivateKey),
 		CaCert:                string(payload.CACert),
+		KeySource:             keySource,
 		Subject:               payload.Subject,
 		CrlDistributionPoints: payload.CrlDistributionPoints,
 		Metadata:              newProtoMetadata(payload.Metadata),

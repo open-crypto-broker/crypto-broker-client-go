@@ -74,7 +74,6 @@ func validateSignCertificatePayload(payload SignCertificatePayload) error {
 		limit protobuf.PayloadLimits
 	}{
 		{"csr", len(payload.CSR), protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CSR_MAX_LEN},
-		{"caPrivateKey", len(payload.CAPrivateKey), protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN},
 		{"caCert", len(payload.CACert), protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_CERT_MAX_LEN},
 	}
 	for _, field := range fields {
@@ -95,8 +94,30 @@ func validateSignCertificatePayload(payload SignCertificatePayload) error {
 			return err
 		}
 	}
+	if err := validateCertificateSignKeySourcePayload(payload.KeySource, payload.CACert); err != nil {
+		return err
+	}
 
 	return validateMetadataPayload(payload.Metadata)
+}
+
+func validateCertificateSignKeySourcePayload(source SignKeySource, caCert []byte) error {
+	if source.Single == nil {
+		return fmt.Errorf("keySource.single is required")
+	}
+
+	if source.Single.KeyID != "" {
+		if len(caCert) != 0 {
+			return fmt.Errorf("caCert must be empty when keySource.single.keyId is set")
+		}
+		return checkPayloadLimit("keySource.single.keyId", len(source.Single.KeyID), protobuf.PayloadLimits_PAYLOAD_LIMITS_ENCRYPT_DECRYPT_DATA_KEYSOURCE_KEY_ID_MAX_LEN)
+	}
+
+	if len(caCert) == 0 {
+		return fmt.Errorf("caCert is required when keySource.single.rawKey is set")
+	}
+
+	return checkPayloadLimit("keySource.single.rawKey", len(source.Single.RawKey), protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN)
 }
 
 func validateKeySourcePayload(source KeySource) error {
