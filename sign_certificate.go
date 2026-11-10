@@ -25,7 +25,7 @@ type SignCertificatePayload struct {
 	// CSR certificate signing request's raw bytes in PEM format
 	CSR []byte
 
-	// CAPrivateKey signing key's raw bytes in PEM format
+	// CAPrivateKey signing key's raw bytes
 	CAPrivateKey []byte
 
 	// CACert CA Certificate's raw bytes in PEM format
@@ -60,11 +60,25 @@ func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificate
 		return nil, err
 	}
 
+	keySource := &protobuf.SignKeySource{
+		Source: &protobuf.SignKeySource_Single{
+			Single: &protobuf.KeySource{
+				Source: &protobuf.KeySource_RawKey{RawKey: payload.CAPrivateKey},
+			},
+		},
+	}
+
+	caCertPtr := (*string)(nil)
+	if len(payload.CACert) > 0 {
+		caCertStr := string(payload.CACert)
+		caCertPtr = &caCertStr
+	}
+
 	req := &protobuf.SignCertificateRequest{
 		Profile:               payload.Profile,
 		Csr:                   string(payload.CSR),
-		CaPrivateKey:          string(payload.CAPrivateKey),
-		CaCert:                string(payload.CACert),
+		KeySource:             keySource,
+		CaCert:                caCertPtr,
 		Subject:               payload.Subject,
 		CrlDistributionPoints: payload.CrlDistributionPoints,
 		Metadata:              newProtoMetadata(payload.Metadata),
