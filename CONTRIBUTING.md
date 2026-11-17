@@ -32,6 +32,12 @@ The following rule governs code contributions:
 * Due to legal reasons, contributors will be asked to accept a Developer Certificate of Origin (DCO) when they create the first pull request to this project. This happens in an automated fashion during the submission process. SAP uses [the standard DCO text of the Linux Foundation](https://developercertificate.org/).
 * Contributions must follow our [guidelines on AI-generated code](https://github.com/open-crypto-broker//.github/blob/main/CONTRIBUTING_USING_GENAI.md) in case you are using such tools.
 
+## Client Test Scenarios
+
+Use the shared [client test scenario catalogue](https://github.com/open-crypto-broker/crypto-broker-documentation/blob/main/spec/client-test-cases.md).
+Add each new test scenario to the catalogue and to both the Go and JavaScript client libraries.
+If a language cannot represent a scenario, document the type-system difference in the catalogue.
+
 ## Issues and Planning
 
 * We use GitHub issues to track bugs and enhancement requests.

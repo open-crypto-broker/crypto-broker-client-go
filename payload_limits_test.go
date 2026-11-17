@@ -68,44 +68,44 @@ func TestValidatePayloadLimits(t *testing.T) {
 		{
 			name: "hash input",
 			validate: func() error {
-				return validateHashDataPayload(HashDataPayload{Input: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_HASH_DATA_INPUT_MAX_LEN)+1)})
+				return validateHashDataPayload(HashDataPayload{Profile: "Default", Input: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_HASH_DATA_INPUT_MAX_LEN)+1)})
 			},
 		},
 		{
 			name: "certificate signing request",
 			validate: func() error {
-				return validateSignCertificatePayload(SignCertificatePayload{CSR: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CSR_MAX_LEN)+1)})
+				return validateSignCertificatePayload(SignCertificatePayload{Profile: "Default", CAPrivateKey: []byte("mocked-key"), CACert: []byte("mocked-cert"), CSR: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CSR_MAX_LEN)+1)})
 			},
 		},
 		{
 			name: "certificate authority private key",
 			validate: func() error {
-				return validateSignCertificatePayload(SignCertificatePayload{CAPrivateKey: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN)+1)})
+				return validateSignCertificatePayload(SignCertificatePayload{Profile: "Default", CSR: []byte("mocked-csr"), CACert: []byte("mocked-cert"), CAPrivateKey: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_PRIVATE_KEY_MAX_LEN)+1)})
 			},
 		},
 		{
 			name: "certificate authority certificate",
 			validate: func() error {
-				return validateSignCertificatePayload(SignCertificatePayload{CACert: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_CERT_MAX_LEN)+1)})
+				return validateSignCertificatePayload(SignCertificatePayload{Profile: "Default", CSR: []byte("mocked-csr"), CAPrivateKey: []byte("mocked-key"), CACert: make([]byte, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_CA_CERT_MAX_LEN)+1)})
 			},
 		},
 		{
 			name: "certificate subject",
 			validate: func() error {
 				subject := strings.Repeat("a", int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_SUBJECT_MAX_LEN)+1)
-				return validateSignCertificatePayload(SignCertificatePayload{Subject: &subject})
+				return validateSignCertificatePayload(SignCertificatePayload{Profile: "Default", CSR: []byte("mocked-csr"), CAPrivateKey: []byte("mocked-key"), CACert: []byte("mocked-cert"), Subject: &subject})
 			},
 		},
 		{
 			name: "certificate distribution point count",
 			validate: func() error {
-				return validateSignCertificatePayload(SignCertificatePayload{CrlDistributionPoints: make([]string, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINTS_MAX)+1)})
+				return validateSignCertificatePayload(SignCertificatePayload{Profile: "Default", CSR: []byte("mocked-csr"), CAPrivateKey: []byte("mocked-key"), CACert: []byte("mocked-cert"), CrlDistributionPoints: make([]string, int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINTS_MAX)+1)})
 			},
 		},
 		{
 			name: "certificate distribution point length",
 			validate: func() error {
-				return validateSignCertificatePayload(SignCertificatePayload{CrlDistributionPoints: []string{strings.Repeat("a", int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINT_MAX_LEN)+1)}})
+				return validateSignCertificatePayload(SignCertificatePayload{Profile: "Default", CSR: []byte("mocked-csr"), CAPrivateKey: []byte("mocked-key"), CACert: []byte("mocked-cert"), CrlDistributionPoints: []string{strings.Repeat("a", int(protobuf.PayloadLimits_PAYLOAD_LIMITS_SIGN_CERTIFICATE_DISTRIBUTION_POINT_MAX_LEN)+1)}})
 			},
 		},
 		{
