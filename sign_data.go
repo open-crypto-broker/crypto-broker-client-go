@@ -37,7 +37,7 @@ type SignDataPayload struct {
 
 // SignData signs payload.Input according to the selected profile.
 func (lib *Library) SignData(ctx context.Context, payload SignDataPayload) (*protobuf.SignDataResponse, error) {
-	keySource, err := payload.KeySource.toProto()
+	keySource, err := payload.KeySource.toProtoWithRawKeyEncoder(privateKeyDER)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (lib *Library) SignData(ctx context.Context, payload SignDataPayload) (*pro
 	})
 }
 
-func (source SignKeySource) toProto() (*protobuf.SignKeySource, error) {
+func (source SignKeySource) toProtoWithRawKeyEncoder(encodeRawKey func([]byte) ([]byte, error)) (*protobuf.SignKeySource, error) {
 	hasSingle := source.Single != nil
 	hasComponents := len(source.ComponentKeys) != 0
 	if hasSingle == hasComponents {
@@ -62,7 +62,7 @@ func (source SignKeySource) toProto() (*protobuf.SignKeySource, error) {
 	}
 
 	if hasSingle {
-		single, err := source.Single.toProto()
+		single, err := source.Single.toProtoWithRawKeyEncoder(encodeRawKey)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func (source SignKeySource) toProto() (*protobuf.SignKeySource, error) {
 
 	keys := make([]*protobuf.KeySource, len(source.ComponentKeys))
 	for index, component := range source.ComponentKeys {
-		key, err := component.toProto()
+		key, err := component.toProtoWithRawKeyEncoder(encodeRawKey)
 		if err != nil {
 			return nil, err
 		}

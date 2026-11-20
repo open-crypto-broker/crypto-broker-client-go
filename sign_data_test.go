@@ -12,11 +12,12 @@ import (
 func TestSignData(t *testing.T) {
 	client := &mockedGRPCClient{}
 	lib := &Library{client: client}
-	key := KeySource{RawKey: []byte("private key")}
+	privateDER, privatePEM, _, _ := testSigningKeyMaterial(t)
+	key := KeySource{RawKey: privatePEM}
 	client.On("SignData", mock.Anything, mock.MatchedBy(func(request *protobuf.SignDataRequest) bool {
 		return request.GetProfile() == "Default" &&
 			string(request.GetInput()) == "document" &&
-			string(request.GetKeySource().GetSingle().GetRawKey()) == "private key" &&
+			string(request.GetKeySource().GetSingle().GetRawKey()) == string(privateDER) &&
 			request.GetSignatureFormat() == protobuf.SignatureFormat_SIGNATURE_FORMAT_UNSPECIFIED
 	})).Return(&protobuf.SignDataResponse{Signature: []byte("signature")}, nil).Once()
 
@@ -35,13 +36,13 @@ func TestSignData(t *testing.T) {
 }
 
 func TestSignKeySourceToProto(t *testing.T) {
-	_, err := (SignKeySource{}).toProto()
+	_, err := (SignKeySource{}).toProtoWithRawKeyEncoder(privateKeyDER)
 	if !errors.Is(err, ErrInvalidSignKeySource) {
 		t.Fatalf("empty SignKeySource error = %v, want %v", err, ErrInvalidSignKeySource)
 	}
 
 	key := KeySource{RawKey: []byte("key")}
-	_, err = (SignKeySource{Single: &key, ComponentKeys: []KeySource{key}}).toProto()
+	_, err = (SignKeySource{Single: &key, ComponentKeys: []KeySource{key}}).toProtoWithRawKeyEncoder(privateKeyDER)
 	if !errors.Is(err, ErrInvalidSignKeySource) {
 		t.Fatalf("mixed SignKeySource error = %v, want %v", err, ErrInvalidSignKeySource)
 	}
