@@ -72,3 +72,22 @@ func (source KeySource) toProto() (*protobuf.KeySource, error) {
 
 	return &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{RawKey: source.RawKey}}, nil
 }
+
+func (source KeySource) toProtoWithRawKeyEncoder(encodeRawKey func([]byte) ([]byte, error)) (*protobuf.KeySource, error) {
+	hasKeyID := source.KeyID != ""
+	hasRawKey := len(source.RawKey) != 0
+	if hasKeyID == hasRawKey {
+		return nil, ErrInvalidKeySource
+	}
+
+	if hasKeyID {
+		return &protobuf.KeySource{Source: &protobuf.KeySource_KeyId{KeyId: source.KeyID}}, nil
+	}
+
+	encodedKey, err := encodeRawKey(source.RawKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &protobuf.KeySource{Source: &protobuf.KeySource_RawKey{RawKey: encodedKey}}, nil
+}

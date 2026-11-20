@@ -49,7 +49,8 @@ func TestLibrary_DecryptData(t *testing.T) {
 			setup: func(client *mockedGRPCClient) *protobuf.DecryptDataResponse {
 				response := &protobuf.DecryptDataResponse{}
 				client.On("DecryptData", mock.Anything, mock.MatchedBy(func(request *protobuf.DecryptDataRequest) bool {
-					return request != nil && request.GetMetadata() != nil && request.GetMetadata().GetId() != "" &&
+					return request != nil && string(request.GetKeySource().GetRawKey()) == "0123456789abcdef0123456789abcdef" &&
+						request.GetMetadata() != nil && request.GetMetadata().GetId() != "" &&
 						request.GetMetadata().GetTraceContext() == nil
 				})).Return(response, nil).Once()
 				return response
