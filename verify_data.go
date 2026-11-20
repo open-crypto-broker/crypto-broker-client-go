@@ -18,7 +18,7 @@ type VerifyDataPayload struct {
 
 // VerifyData verifies payload.Signature against payload.Input according to the selected profile.
 func (lib *Library) VerifyData(ctx context.Context, payload VerifyDataPayload) (*protobuf.VerifyDataResponse, error) {
-	keySource, err := payload.KeySource.toProto()
+	keySource, err := payload.KeySource.toProtoWithRawKeyEncoder(publicKeyDER)
 	if err != nil {
 		return nil, err
 	}

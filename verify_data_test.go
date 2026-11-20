@@ -11,12 +11,13 @@ import (
 func TestVerifyData(t *testing.T) {
 	client := &mockedGRPCClient{}
 	lib := &Library{client: client}
-	key := KeySource{RawKey: []byte("public key")}
+	_, _, publicDER, publicPEM := testSigningKeyMaterial(t)
+	key := KeySource{RawKey: publicPEM}
 	client.On("VerifyData", mock.Anything, mock.MatchedBy(func(request *protobuf.VerifyDataRequest) bool {
 		return request.GetProfile() == "Default" &&
 			string(request.GetInput()) == "document" &&
 			string(request.GetSignature()) == "signature" &&
-			string(request.GetKeySource().GetSingle().GetRawKey()) == "public key"
+			string(request.GetKeySource().GetSingle().GetRawKey()) == string(publicDER)
 	})).Return(&protobuf.VerifyDataResponse{Valid: true}, nil).Once()
 
 	response, err := lib.VerifyData(context.Background(), VerifyDataPayload{

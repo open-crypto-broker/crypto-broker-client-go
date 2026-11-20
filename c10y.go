@@ -1,0 +1,74 @@
+package cryptobrokerclientgo
+
+import (
+	"bytes"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
+)
+
+func privateKeyDER(key []byte) ([]byte, error) {
+	if block, rest := pem.Decode(key); block != nil {
+		if len(bytes.TrimSpace(rest)) != 0 {
+			return nil, fmt.Errorf("private key PEM contains trailing data")
+		}
+
+		if block.Type == "ML-DSA PRIVATE KEY" {
+			return block.Bytes, nil
+		}
+
+		key = block.Bytes
+	}
+
+	if _, err := x509.ParsePKCS1PrivateKey(key); err == nil {
+		return key, nil
+	}
+
+	if _, err := x509.ParsePKCS8PrivateKey(key); err == nil {
+		return key, nil
+	}
+
+	if _, err := x509.ParseECPrivateKey(key); err == nil {
+		return key, nil
+	}
+
+	return nil, fmt.Errorf("private key must be PEM or supported DER")
+}
+
+func publicKeyDER(key []byte) ([]byte, error) {
+	if block, rest := pem.Decode(key); block != nil {
+		if len(bytes.TrimSpace(rest)) != 0 {
+			return nil, fmt.Errorf("public key PEM contains trailing data")
+		}
+
+		switch block.Type {
+		case "ML-DSA PUBLIC KEY":
+			return block.Bytes, nil
+		case "CERTIFICATE":
+			key = block.Bytes
+		case "PUBLIC KEY", "RSA PUBLIC KEY":
+			key = block.Bytes
+		default:
+			return nil, fmt.Errorf("unsupported public key PEM block type %q", block.Type)
+		}
+	}
+
+	if certificate, err := x509.ParseCertificate(key); err == nil {
+		return x509.MarshalPKIXPublicKey(certificate.PublicKey)
+	}
+
+	publicKey, err := x509.ParsePKIXPublicKey(key)
+	if err != nil {
+		publicKey, err = x509.ParsePKCS1PublicKey(key)
+		if err != nil {
+			return nil, fmt.Errorf("public key must be PEM or supported DER: %w", err)
+		}
+	}
+
+	der, err := x509.MarshalPKIXPublicKey(publicKey)
+	if err != nil {
+		return nil, fmt.Errorf("encode public key as DER: %w", err)
+	}
+
+	return der, nil
+}

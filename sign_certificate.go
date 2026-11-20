@@ -27,6 +27,7 @@ type SignCertificatePayload struct {
 	CSR []byte
 
 	// KeySource contains either a raw PEM/DER signing key or a KMS key ID.
+	// Conventional asymmetric keys are converted to DER before transmission.
 	KeySource SignKeySource
 
 	// CACert contains the CA certificate in PEM format when KeySource contains a raw key.
@@ -58,38 +59,39 @@ var ErrInvalidSignOutputFormat = fmt.Errorf("invalid sign output format, must be
 // As result it returns signed x509 certificate or non-nil error if any.
 // Please familiarize yourself with the encoding options before using this method.
 func (lib *Library) SignCertificate(ctx context.Context, payload SignCertificatePayload) (*protobuf.SignCertificateResponse, error) {
-	keySource, err := payload.KeySource.toProto()
+	keySource, err := payload.KeySource.toProtoWithRawKeyEncoder(privateKeyDER)
 	if err != nil {
 		return nil, err
 	}
-	err = validateSignCertificatePayload(payload)
-	if err != nil {
+	if err = validateSignCertificatePayload(payload); err != nil {
 		return nil, err
 	}
 
-	var caCert *string
+	caCertPtr := (*string)(nil)
 	if len(payload.CACert) > 0 {
-		value := string(payload.CACert)
-		caCert = &value
+		caCertStr := string(payload.CACert)
+		caCertPtr = &caCertStr
+	}
+
+	var outputFormat protobuf.SignOutputFormat
+	switch payload.OutputFormat {
+	case OutputFormatDer:
+		outputFormat = protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER
+	case OutputFormatPem:
+		outputFormat = protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM
+	default:
+		return nil, ErrInvalidSignOutputFormat
 	}
 
 	req := &protobuf.SignCertificateRequest{
 		Profile:               payload.Profile,
 		Csr:                   string(payload.CSR),
 		KeySource:             keySource,
-		CaCert:                caCert,
+		CaCert:                caCertPtr,
 		Subject:               payload.Subject,
 		CrlDistributionPoints: payload.CrlDistributionPoints,
 		Metadata:              newProtoMetadata(payload.Metadata),
-	}
-
-	switch payload.OutputFormat {
-	case OutputFormatDer:
-		req.OutputFormat = protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_DER
-	case OutputFormatPem:
-		req.OutputFormat = protobuf.SignOutputFormat_SIGN_OUTPUT_FORMAT_PEM
-	default:
-		return nil, ErrInvalidSignOutputFormat
+		OutputFormat:          outputFormat,
 	}
 
 	if payload.ValidNotBefore != nil {

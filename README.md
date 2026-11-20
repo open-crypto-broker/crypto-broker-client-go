@@ -18,6 +18,7 @@ go get github.com/open-crypto-broker/crypto-broker-client-go
 
 This code serves as an example on how to call the library's basic functions. Please add your own error Handling and other functions as necessary.
 For signing, the library excepts the raw content read by any compatible `io.Reader`.
+Signing and verification key inputs may be PEM- or DER-encoded; the library normalizes conventional asymmetric keys to DER before sending them. Caller-managed symmetric encryption keys are sent as raw bytes. Custom ML-DSA PEM blocks are decoded to raw key bytes, not DER. KMS key IDs are sent unchanged.
 
 ```go
 // Import
