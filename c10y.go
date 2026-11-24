@@ -8,31 +8,10 @@ import (
 )
 
 func privateKeyDER(key []byte) ([]byte, error) {
-	if block, rest := pem.Decode(key); block != nil {
-		if len(bytes.TrimSpace(rest)) != 0 {
-			return nil, fmt.Errorf("private key PEM contains trailing data")
-		}
-
-		if block.Type == "ML-DSA PRIVATE KEY" {
-			return block.Bytes, nil
-		}
-
-		key = block.Bytes
+	if _, err := x509.ParsePKCS8PrivateKey(key); err != nil {
+		return nil, fmt.Errorf("private key must be PKCS#8 DER: %w", err)
 	}
-
-	if _, err := x509.ParsePKCS1PrivateKey(key); err == nil {
-		return key, nil
-	}
-
-	if _, err := x509.ParsePKCS8PrivateKey(key); err == nil {
-		return key, nil
-	}
-
-	if _, err := x509.ParseECPrivateKey(key); err == nil {
-		return key, nil
-	}
-
-	return nil, fmt.Errorf("private key must be PEM or supported DER")
+	return key, nil
 }
 
 func publicKeyDER(key []byte) ([]byte, error) {
