@@ -26,8 +26,7 @@ type SignCertificatePayload struct {
 	// CSR certificate signing request's raw bytes in PEM format
 	CSR []byte
 
-	// KeySource contains either a raw PEM/DER signing key or a KMS key ID.
-	// Conventional asymmetric keys are converted to DER before transmission.
+	// KeySource contains either a PKCS#8 DER signing key or a KMS key ID.
 	KeySource SignKeySource
 
 	// CACert contains the CA certificate in PEM format when KeySource contains a raw key.

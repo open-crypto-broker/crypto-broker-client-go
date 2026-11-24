@@ -27,6 +27,7 @@ const (
 )
 
 // SignDataPayload contains an arbitrary payload and its signing configuration.
+// Raw private keys in KeySource must be PKCS#8 DER encoded.
 type SignDataPayload struct {
 	Profile         string
 	KeySource       SignKeySource

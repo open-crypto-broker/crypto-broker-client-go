@@ -14,7 +14,7 @@ import (
 
 func TestLibrary_SignCertificate(t *testing.T) {
 	mockedClient := &mockedGRPCClient{}
-	privateDER, privateKeyPEM, _, _ := testSigningKeyMaterial(t)
+	privateDER, _, _, _ := testSigningKeyMaterial(t)
 	zeroTime := time.Time{}
 	currentTime := time.Now()
 
@@ -52,7 +52,7 @@ func TestLibrary_SignCertificate(t *testing.T) {
 				ctx: context.TODO(),
 				payload: SignCertificatePayload{
 					OutputFormat: OutputFormatPem,
-					KeySource:    SignKeySource{Single: &KeySource{RawKey: privateKeyPEM}},
+					KeySource:    SignKeySource{Single: &KeySource{RawKey: privateDER}},
 					CACert:       []byte("CA certificate"),
 				},
 			},
@@ -80,7 +80,7 @@ func TestLibrary_SignCertificate(t *testing.T) {
 				ctx: context.TODO(),
 				payload: SignCertificatePayload{
 					OutputFormat: OutputFormatDer,
-					KeySource:    SignKeySource{Single: &KeySource{RawKey: privateKeyPEM}},
+					KeySource:    SignKeySource{Single: &KeySource{RawKey: privateDER}},
 					CACert:       []byte("CA certificate"),
 				},
 			},
@@ -192,22 +192,13 @@ func TestLibrary_SignCertificate(t *testing.T) {
 }
 
 func TestLibrary_SignCertificateUsesSignKeySource(t *testing.T) {
-	privateDER, privatePEM, _, _ := testSigningKeyMaterial(t)
+	privateDER, _, _, _ := testSigningKeyMaterial(t)
 	tests := []struct {
 		name      string
 		keySource KeySource
 		caCert    []byte
 		matches   func(*protobuf.SignCertificateRequest) bool
 	}{
-		{
-			name:      "PEM key is converted to DER",
-			keySource: KeySource{RawKey: privatePEM},
-			caCert:    []byte("CA certificate"),
-			matches: func(req *protobuf.SignCertificateRequest) bool {
-				return string(req.GetKeySource().GetSingle().GetRawKey()) == string(privateDER) &&
-					req.GetCaCert() == "CA certificate"
-			},
-		},
 		{
 			name:      "DER key is preserved",
 			keySource: KeySource{RawKey: privateDER},
@@ -293,7 +284,7 @@ func TestLibrary_SignCertificateRejectsInvalidSigningMaterial(t *testing.T) {
 
 func testCertificateSignKeySource(t *testing.T) SignKeySource {
 	t.Helper()
-	_, privatePEM, _, _ := testSigningKeyMaterial(t)
-	key := KeySource{RawKey: privatePEM}
+	privateDER, _, _, _ := testSigningKeyMaterial(t)
+	key := KeySource{RawKey: privateDER}
 	return SignKeySource{Single: &key}
 }
