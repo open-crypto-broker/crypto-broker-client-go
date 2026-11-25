@@ -21,14 +21,14 @@ func publicKeyDER(key []byte) ([]byte, error) {
 		}
 
 		switch block.Type {
-		case "ML-DSA PUBLIC KEY":
-			return block.Bytes, nil
 		case "CERTIFICATE":
 			key = block.Bytes
-		case "PUBLIC KEY", "RSA PUBLIC KEY":
+		case "PUBLIC KEY":
 			key = block.Bytes
+		case "RSA PUBLIC KEY":
+			return nil, fmt.Errorf("public key must be PKCS#8 format (PUBLIC KEY label), not PKCS#1 (RSA PUBLIC KEY label)")
 		default:
-			return nil, fmt.Errorf("unsupported public key PEM block type %q", block.Type)
+			return nil, fmt.Errorf("unsupported public key PEM block type %q; public key must use PUBLIC KEY label", block.Type)
 		}
 	}
 
@@ -40,7 +40,7 @@ func publicKeyDER(key []byte) ([]byte, error) {
 	if err != nil {
 		publicKey, err = x509.ParsePKCS1PublicKey(key)
 		if err != nil {
-			return nil, fmt.Errorf("public key must be PEM or supported DER: %w", err)
+			return nil, fmt.Errorf("public key must be PKCS#8 SubjectPublicKeyInfo DER or PEM with PUBLIC KEY label: %w", err)
 		}
 	}
 
