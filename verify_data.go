@@ -7,6 +7,7 @@ import (
 )
 
 // VerifyDataPayload contains a payload, signature, and verification configuration.
+// Raw public keys in KeySource must be SubjectPublicKeyInfo DER encoded.
 type VerifyDataPayload struct {
 	Profile         string
 	KeySource       SignKeySource

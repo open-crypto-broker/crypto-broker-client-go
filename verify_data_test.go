@@ -11,8 +11,8 @@ import (
 func TestVerifyData(t *testing.T) {
 	client := &mockedGRPCClient{}
 	lib := &Library{client: client}
-	_, _, publicDER, publicPEM := testSigningKeyMaterial(t)
-	key := KeySource{RawKey: publicPEM}
+	_, publicDER := testSigningKeyMaterial(t)
+	key := KeySource{RawKey: publicDER}
 	client.On("VerifyData", mock.Anything, mock.MatchedBy(func(request *protobuf.VerifyDataRequest) bool {
 		return request.GetProfile() == "Default" &&
 			string(request.GetInput()) == "document" &&

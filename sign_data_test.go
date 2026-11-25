@@ -12,7 +12,7 @@ import (
 func TestSignData(t *testing.T) {
 	client := &mockedGRPCClient{}
 	lib := &Library{client: client}
-	privateDER, _, _, _ := testSigningKeyMaterial(t)
+	privateDER, _ := testSigningKeyMaterial(t)
 	key := KeySource{RawKey: privateDER}
 	client.On("SignData", mock.Anything, mock.MatchedBy(func(request *protobuf.SignDataRequest) bool {
 		return request.GetProfile() == "Default" &&
