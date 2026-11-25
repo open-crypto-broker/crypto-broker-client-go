@@ -79,7 +79,6 @@ func TestPrivateKeyDERRejectsLegacyFormats(t *testing.T) {
 		{"PKCS1 DER", x509.MarshalPKCS1PrivateKey(rsaKey)},
 		{"SEC1 DER", sec1DER},
 		{"SEC1 PEM", pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: sec1DER})},
-		{"ML-DSA PEM", pem.EncodeToMemory(&pem.Block{Type: "ML-DSA PRIVATE KEY", Bytes: []byte{1, 2, 3}})},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if _, err := privateKeyDER(test.key); err == nil {
@@ -101,6 +100,24 @@ func TestPrivateKeyDERRejectsLegacyFormats(t *testing.T) {
 			}
 			client.AssertNotCalled(t, "SignData")
 			client.AssertNotCalled(t, "SignCertificate")
+		})
+	}
+}
+
+func TestPublicKeyDERRejectsCustomPEMLabels(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		key  []byte
+	}{
+		{"ML-DSA PUBLIC KEY", pem.EncodeToMemory(&pem.Block{Type: "ML-DSA PUBLIC KEY", Bytes: []byte{0x30, 0x03, 0x02, 0x01, 0x00}})},
+		{"ML-DSA PRIVATE KEY", pem.EncodeToMemory(&pem.Block{Type: "ML-DSA PRIVATE KEY", Bytes: []byte{0x30, 0x03, 0x02, 0x01, 0x00}})},
+		{"EC PRIVATE KEY", pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: []byte{0x30, 0x03, 0x02, 0x01, 0x00}})},
+		{"RSA PUBLIC KEY", pem.EncodeToMemory(&pem.Block{Type: "RSA PUBLIC KEY", Bytes: []byte{0x30, 0x03, 0x02, 0x01, 0x00}})},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := publicKeyDER(test.key); err == nil {
+				t.Fatal("accepted custom PEM label")
+			}
 		})
 	}
 }
