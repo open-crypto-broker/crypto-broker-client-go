@@ -14,7 +14,7 @@ import (
 
 func TestLibrary_SignCertificate(t *testing.T) {
 	mockedClient := &mockedGRPCClient{}
-	privateDER, _, _, _ := testSigningKeyMaterial(t)
+	privateDER, _ := testSigningKeyMaterial(t)
 	zeroTime := time.Time{}
 	currentTime := time.Now()
 
@@ -192,7 +192,7 @@ func TestLibrary_SignCertificate(t *testing.T) {
 }
 
 func TestLibrary_SignCertificateUsesSignKeySource(t *testing.T) {
-	privateDER, _, _, _ := testSigningKeyMaterial(t)
+	privateDER, _ := testSigningKeyMaterial(t)
 	tests := []struct {
 		name      string
 		keySource KeySource
@@ -261,11 +261,6 @@ func TestLibrary_SignCertificateRejectsInvalidSigningMaterial(t *testing.T) {
 			}},
 			caCert: []byte("CA certificate"),
 		},
-		{
-			name:      "malformed private key",
-			keySource: SignKeySource{Single: &KeySource{RawKey: []byte("not a private key")}},
-			caCert:    []byte("CA certificate"),
-		},
 	}
 
 	for _, test := range tests {
@@ -284,7 +279,7 @@ func TestLibrary_SignCertificateRejectsInvalidSigningMaterial(t *testing.T) {
 
 func testCertificateSignKeySource(t *testing.T) SignKeySource {
 	t.Helper()
-	privateDER, _, _, _ := testSigningKeyMaterial(t)
+	privateDER, _ := testSigningKeyMaterial(t)
 	key := KeySource{RawKey: privateDER}
 	return SignKeySource{Single: &key}
 }

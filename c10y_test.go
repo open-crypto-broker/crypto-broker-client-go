@@ -9,120 +9,160 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
+	"math/big"
 	"testing"
+	"time"
+
+	protobuf "github.com/open-crypto-broker/crypto-broker-client-go/internal/gen/cryptobroker/v1"
+	"github.com/stretchr/testify/mock"
 )
 
-func TestKeyEncoding(t *testing.T) {
-	privateKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-	if err != nil {
-		t.Fatalf("generate key: %v", err)
-	}
-	privateDER, err := x509.MarshalPKCS8PrivateKey(privateKey)
-	if err != nil {
-		t.Fatalf("marshal private key: %v", err)
-	}
-	publicDER, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		t.Fatalf("marshal public key: %v", err)
-	}
-
-	publicPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicDER})
-
-	gotPrivateDER, err := privateKeyDER(privateDER)
-	if err != nil || !bytes.Equal(gotPrivateDER, privateDER) {
-		t.Fatalf("privateKeyDER(DER) = %x, err %v; want %x", gotPrivateDER, err, privateDER)
-	}
-
-	gotPublicDER, err := publicKeyDER(publicPEM)
-	if err != nil || !bytes.Equal(gotPublicDER, publicDER) {
-		t.Fatalf("publicKeyDER(PEM) = %x, err %v; want %x", gotPublicDER, err, publicDER)
-	}
-	gotPublicDER, err = publicKeyDER(publicDER)
-	if err != nil || !bytes.Equal(gotPublicDER, publicDER) {
-		t.Fatalf("publicKeyDER(DER) = %x, err %v; want %x", gotPublicDER, err, publicDER)
+func TestSigningKeyPEMRejectedBeforeRPC(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		key  []byte
+	}{
+		{"private", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: []byte{1}})},
+		{"public with leading whitespace", append([]byte(" \n\t"), pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: []byte{1}})...)},
+		{"certificate", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: []byte{1}})},
+		{"malformed PEM", []byte("-----BEGIN broken")},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			client := &mockedGRPCClient{}
+			lib := &Library{client: client}
+			source := SignKeySource{Single: &KeySource{RawKey: test.key}}
+			if _, err := lib.SignData(context.Background(), SignDataPayload{KeySource: source}); err == nil {
+				t.Error("SignData accepted PEM")
+			}
+			if _, err := lib.SignCertificate(context.Background(), SignCertificatePayload{
+				KeySource: source, CACert: []byte("CA certificate"), OutputFormat: OutputFormatDer,
+			}); err == nil {
+				t.Error("SignCertificate accepted PEM")
+			}
+			if _, err := lib.VerifyData(context.Background(), VerifyDataPayload{KeySource: source}); err == nil {
+				t.Error("VerifyData accepted PEM")
+			}
+			client.AssertNotCalled(t, "SignData")
+			client.AssertNotCalled(t, "SignCertificate")
+			client.AssertNotCalled(t, "VerifyData")
+		})
 	}
 }
 
-func TestKeyEncodingRejectsInvalidInput(t *testing.T) {
-	if _, err := privateKeyDER([]byte("not a key")); err == nil {
-		t.Fatal("privateKeyDER() accepted invalid key")
-	}
-	if _, err := publicKeyDER([]byte("not a key")); err == nil {
-		t.Fatal("publicKeyDER() accepted invalid key")
-	}
-
-}
-
-func TestPrivateKeyDERRejectsLegacyFormats(t *testing.T) {
-	privateDER, privatePEM, _, _ := testSigningKeyMaterial(t)
-	parsedKey, err := x509.ParsePKCS8PrivateKey(privateDER)
+func TestSigningKeyBytesPassedUnchanged(t *testing.T) {
+	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ecKey, ok := parsedKey.(*ecdsa.PrivateKey)
-	if !ok {
-		t.Fatalf("expected ECDSA key, got %T", parsedKey)
+	ecKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
 	}
 	sec1DER, err := x509.MarshalECPrivateKey(ecKey)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	certTemplate := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour),
+	}
+	certificate, err := x509.CreateCertificate(rand.Reader, certTemplate, certTemplate, &rsaKey.PublicKey, rsaKey)
 	if err != nil {
 		t.Fatal(err)
 	}
+	serverErr := errors.New("server rejected key")
 	for _, test := range []struct {
 		name string
 		key  []byte
 	}{
-		{"PKCS8 PEM", privatePEM},
-		{"PKCS1 DER", x509.MarshalPKCS1PrivateKey(rsaKey)},
-		{"SEC1 DER", sec1DER},
-		{"SEC1 PEM", pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: sec1DER})},
+		{"unrecognized DER", []byte{0x30, 0x01, 0xff}},
+		{"PKCS1 private", x509.MarshalPKCS1PrivateKey(rsaKey)},
+		{"SEC1 private", sec1DER},
+		{"PKCS1 public", x509.MarshalPKCS1PublicKey(&rsaKey.PublicKey)},
+		{"certificate", certificate},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if _, err := privateKeyDER(test.key); err == nil {
-				t.Fatal("accepted a non-PKCS#8 DER private key")
-			}
 			client := &mockedGRPCClient{}
 			lib := &Library{client: client}
 			source := SignKeySource{Single: &KeySource{RawKey: test.key}}
-			if _, err := lib.SignData(context.Background(), SignDataPayload{
-				Profile: "Default", KeySource: source, Input: []byte("document"),
-			}); err == nil {
-				t.Fatal("SignData accepted a non-PKCS#8 DER private key")
+			client.On("SignData", mock.Anything, mock.MatchedBy(func(req *protobuf.SignDataRequest) bool {
+				return bytes.Equal(req.GetKeySource().GetSingle().GetRawKey(), test.key)
+			})).Return(&protobuf.SignDataResponse{}, serverErr).Once()
+			client.On("SignCertificate", mock.Anything, mock.MatchedBy(func(req *protobuf.SignCertificateRequest) bool {
+				return bytes.Equal(req.GetKeySource().GetSingle().GetRawKey(), test.key)
+			})).Return(&protobuf.SignCertificateResponse{}, serverErr).Once()
+			client.On("VerifyData", mock.Anything, mock.MatchedBy(func(req *protobuf.VerifyDataRequest) bool {
+				return bytes.Equal(req.GetKeySource().GetSingle().GetRawKey(), test.key)
+			})).Return(&protobuf.VerifyDataResponse{}, serverErr).Once()
+
+			_, err := lib.SignData(context.Background(), SignDataPayload{KeySource: source})
+			if !errors.Is(err, serverErr) {
+				t.Errorf("SignData error = %v, want server error", err)
 			}
-			if _, err := lib.SignCertificate(context.Background(), SignCertificatePayload{
-				Profile: "Default", KeySource: source, CACert: []byte("CA certificate"),
-				OutputFormat: OutputFormatDer,
-			}); err == nil {
-				t.Fatal("SignCertificate accepted a non-PKCS#8 DER private key")
+			_, err = lib.SignCertificate(context.Background(), SignCertificatePayload{
+				KeySource: source, CACert: []byte("CA certificate"), OutputFormat: OutputFormatDer,
+			})
+			if !errors.Is(err, serverErr) {
+				t.Errorf("SignCertificate error = %v, want server error", err)
 			}
-			client.AssertNotCalled(t, "SignData")
-			client.AssertNotCalled(t, "SignCertificate")
+			_, err = lib.VerifyData(context.Background(), VerifyDataPayload{KeySource: source})
+			if !errors.Is(err, serverErr) {
+				t.Errorf("VerifyData error = %v, want server error", err)
+			}
+			client.AssertExpectations(t)
 		})
 	}
 }
 
-func TestPublicKeyDERRejectsCustomPEMLabels(t *testing.T) {
-	for _, test := range []struct {
-		name string
-		key  []byte
-	}{
-		{"ML-DSA PUBLIC KEY", pem.EncodeToMemory(&pem.Block{Type: "ML-DSA PUBLIC KEY", Bytes: []byte{0x30, 0x03, 0x02, 0x01, 0x00}})},
-		{"ML-DSA PRIVATE KEY", pem.EncodeToMemory(&pem.Block{Type: "ML-DSA PRIVATE KEY", Bytes: []byte{0x30, 0x03, 0x02, 0x01, 0x00}})},
-		{"EC PRIVATE KEY", pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: []byte{0x30, 0x03, 0x02, 0x01, 0x00}})},
-		{"RSA PUBLIC KEY", pem.EncodeToMemory(&pem.Block{Type: "RSA PUBLIC KEY", Bytes: []byte{0x30, 0x03, 0x02, 0x01, 0x00}})},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			if _, err := publicKeyDER(test.key); err == nil {
-				t.Fatal("accepted custom PEM label")
-			}
-		})
+func TestComponentSigningKeyBytesPassedUnchanged(t *testing.T) {
+	client := &mockedGRPCClient{}
+	lib := &Library{client: client}
+	raw := []byte{0x30, 0x01, 0xff}
+	source := SignKeySource{ComponentKeys: []KeySource{
+		{RawKey: raw},
+		{KeyID: "managed-key"},
+	}}
+	matches := func(keys *protobuf.ComponentKeys) bool {
+		return len(keys.GetKeys()) == 2 &&
+			bytes.Equal(keys.GetKeys()[0].GetRawKey(), raw) &&
+			keys.GetKeys()[1].GetKeyId() == "managed-key"
 	}
+	client.On("SignData", mock.Anything, mock.MatchedBy(func(req *protobuf.SignDataRequest) bool {
+		return matches(req.GetKeySource().GetComponentKeys())
+	})).Return(&protobuf.SignDataResponse{}, nil).Once()
+	client.On("VerifyData", mock.Anything, mock.MatchedBy(func(req *protobuf.VerifyDataRequest) bool {
+		return matches(req.GetKeySource().GetComponentKeys())
+	})).Return(&protobuf.VerifyDataResponse{}, nil).Once()
+
+	if _, err := lib.SignData(context.Background(), SignDataPayload{KeySource: source}); err != nil {
+		t.Errorf("SignData error = %v", err)
+	}
+	if _, err := lib.VerifyData(context.Background(), VerifyDataPayload{KeySource: source}); err != nil {
+		t.Errorf("VerifyData error = %v", err)
+	}
+	client.AssertExpectations(t)
 }
 
-func testSigningKeyMaterial(t *testing.T) (privateDER, privatePEM, publicDER, publicPEM []byte) {
+func TestComponentSigningKeysRejectPEM(t *testing.T) {
+	client := &mockedGRPCClient{}
+	lib := &Library{client: client}
+	source := SignKeySource{ComponentKeys: []KeySource{
+		{RawKey: []byte{0x30, 0x00}},
+		{RawKey: []byte("-----BEGIN PUBLIC KEY-----")},
+	}}
+	if _, err := lib.SignData(context.Background(), SignDataPayload{KeySource: source}); err == nil {
+		t.Error("SignData accepted a PEM component key")
+	}
+	if _, err := lib.VerifyData(context.Background(), VerifyDataPayload{KeySource: source}); err == nil {
+		t.Error("VerifyData accepted a PEM component key")
+	}
+	client.AssertNotCalled(t, "SignData")
+	client.AssertNotCalled(t, "VerifyData")
+}
+
+func testSigningKeyMaterial(t *testing.T) (privateDER, publicDER []byte) {
 	t.Helper()
 	privateKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
@@ -136,7 +176,5 @@ func testSigningKeyMaterial(t *testing.T) (privateDER, privatePEM, publicDER, pu
 	if err != nil {
 		t.Fatalf("marshal public key: %v", err)
 	}
-	privatePEM = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privateDER})
-	publicPEM = pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicDER})
-	return privateDER, privatePEM, publicDER, publicPEM
+	return privateDER, publicDER
 }

@@ -18,7 +18,7 @@ go get github.com/open-crypto-broker/crypto-broker-client-go
 
 This code serves as an example on how to call the library's basic functions. Please add your own error Handling and other functions as necessary.
 For signing, the library excepts the raw content read by any compatible `io.Reader`.
-Signing private keys must be PKCS#8 DER encoded; PEM, PKCS#1, and SEC1 private keys are rejected before transmission. Verification key inputs may be PEM- or DER-encoded and are normalized to DER. Caller-managed symmetric encryption keys are sent as raw bytes. KMS key IDs are sent unchanged.
+Signing private keys must be PKCS#8 DER encoded and verification public keys must be SubjectPublicKeyInfo DER encoded. PEM keys are rejected before transmission. Other key bytes are sent unchanged; the server validates their format and contents. Caller-managed symmetric encryption keys are sent as raw bytes. KMS key IDs are sent unchanged.
 
 ```go
 // Import
