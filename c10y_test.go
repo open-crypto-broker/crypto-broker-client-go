@@ -18,34 +18,140 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestSigningKeyPEMRejectedBeforeRPC(t *testing.T) {
+func TestInvalidPrivateKeyPEMRejectedBeforeRPC(t *testing.T) {
+	valid := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: []byte{1}})
 	for _, test := range []struct {
 		name string
 		key  []byte
 	}{
-		{"private", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: []byte{1}})},
 		{"public with leading whitespace", append([]byte(" \n\t"), pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: []byte{1}})...)},
 		{"certificate", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: []byte{1}})},
+		{"PKCS1 private", pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: []byte{1}})},
+		{"SEC1 private", pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: []byte{1}})},
+		{"encrypted PKCS8", pem.EncodeToMemory(&pem.Block{Type: "ENCRYPTED PRIVATE KEY", Bytes: []byte{1}})},
+		{"custom ML-DSA", pem.EncodeToMemory(&pem.Block{Type: "ML-DSA PRIVATE KEY", Bytes: []byte{1}})},
+		{"headers", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Headers: map[string]string{"Proc-Type": "4,ENCRYPTED"}, Bytes: []byte{1}})},
+		{"multiple blocks", append(bytes.Clone(valid), valid...)},
+		{"trailing data", append(bytes.Clone(valid), []byte("trailing")...)},
 		{"malformed PEM", []byte("-----BEGIN broken")},
+		{"malformed followed by valid", append([]byte("-----BEGIN PRIVATE KEY-----\ninvalid\n"), valid...)},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			client := &mockedGRPCClient{}
 			lib := &Library{client: client}
 			source := SignKeySource{Single: &KeySource{RawKey: test.key}}
 			if _, err := lib.SignData(context.Background(), SignDataPayload{KeySource: source}); err == nil {
-				t.Error("SignData accepted PEM")
+				t.Error("SignData accepted invalid PEM")
 			}
 			if _, err := lib.SignCertificate(context.Background(), SignCertificatePayload{
 				KeySource: source, CACert: []byte("CA certificate"), OutputFormat: OutputFormatDer,
 			}); err == nil {
-				t.Error("SignCertificate accepted PEM")
-			}
-			if _, err := lib.VerifyData(context.Background(), VerifyDataPayload{KeySource: source}); err == nil {
-				t.Error("VerifyData accepted PEM")
+				t.Error("SignCertificate accepted invalid PEM")
 			}
 			client.AssertNotCalled(t, "SignData")
 			client.AssertNotCalled(t, "SignCertificate")
-			client.AssertNotCalled(t, "VerifyData")
+		})
+	}
+}
+
+func TestPrivateKeyPEMDecodedBeforeRPC(t *testing.T) {
+	privateDER, _ := testSigningKeyMaterial(t)
+	for _, test := range []struct {
+		name string
+		der  []byte
+	}{
+		{"PKCS8", privateDER},
+		{"unvalidated DER", []byte{0x30, 0x01, 0xff}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			client := &mockedGRPCClient{}
+			lib := &Library{client: client}
+			encoded := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: test.der})
+			encoded = append(append([]byte(" \n\t"), encoded...), []byte(" \r\n")...)
+			source := SignKeySource{Single: &KeySource{RawKey: encoded}}
+			client.On("SignData", mock.Anything, mock.MatchedBy(func(req *protobuf.SignDataRequest) bool {
+				return bytes.Equal(req.GetKeySource().GetSingle().GetRawKey(), test.der)
+			})).Return(&protobuf.SignDataResponse{}, nil).Once()
+			client.On("SignCertificate", mock.Anything, mock.MatchedBy(func(req *protobuf.SignCertificateRequest) bool {
+				return bytes.Equal(req.GetKeySource().GetSingle().GetRawKey(), test.der)
+			})).Return(&protobuf.SignCertificateResponse{}, nil).Once()
+			if _, err := lib.SignData(context.Background(), SignDataPayload{KeySource: source}); err != nil {
+				t.Errorf("SignData error = %v", err)
+			}
+			if _, err := lib.SignCertificate(context.Background(), SignCertificatePayload{
+				KeySource: source, CACert: []byte("CA certificate"), OutputFormat: OutputFormatDer,
+			}); err != nil {
+				t.Errorf("SignCertificate error = %v", err)
+			}
+			client.AssertExpectations(t)
+		})
+	}
+}
+
+func TestPrivateKeyPEMDecodedInComponentKeys(t *testing.T) {
+	der := []byte{0x30, 0x01, 0xff}
+	source := SignKeySource{ComponentKeys: []KeySource{
+		{RawKey: pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})},
+		{KeyID: "managed-key"},
+	}}
+	client := &mockedGRPCClient{}
+	client.On("SignData", mock.Anything, mock.MatchedBy(func(req *protobuf.SignDataRequest) bool {
+		keys := req.GetKeySource().GetComponentKeys().GetKeys()
+		return len(keys) == 2 && bytes.Equal(keys[0].GetRawKey(), der) && keys[1].GetKeyId() == "managed-key"
+	})).Return(&protobuf.SignDataResponse{}, nil).Once()
+	if _, err := (&Library{client: client}).SignData(context.Background(), SignDataPayload{KeySource: source}); err != nil {
+		t.Fatalf("SignData error = %v", err)
+	}
+	client.AssertExpectations(t)
+}
+
+func TestVerifyDataRejectsPrivateKeyPEM(t *testing.T) {
+	client := &mockedGRPCClient{}
+	key := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: []byte{1}})
+	if _, err := (&Library{client: client}).VerifyData(context.Background(), VerifyDataPayload{
+		KeySource: SignKeySource{Single: &KeySource{RawKey: key}},
+	}); err == nil {
+		t.Fatal("VerifyData accepted PEM")
+	}
+	client.AssertNotCalled(t, "VerifyData")
+}
+
+func TestVerifyDataDecodesPublicKeyPEMBeforeRPC(t *testing.T) {
+	_, publicDER := testSigningKeyMaterial(t)
+	publicPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicDER})
+	publicPEM = append(append([]byte(" \n\t"), publicPEM...), []byte(" \r\n")...)
+
+	for _, test := range []struct {
+		name      string
+		keySource SignKeySource
+		matches   func(*protobuf.VerifyDataRequest) bool
+	}{
+		{
+			name:      "single PEM key",
+			keySource: SignKeySource{Single: &KeySource{RawKey: publicPEM}},
+			matches: func(req *protobuf.VerifyDataRequest) bool {
+				return bytes.Equal(req.GetKeySource().GetSingle().GetRawKey(), publicDER)
+			},
+		},
+		{
+			name: "component PEM and DER keys",
+			keySource: SignKeySource{ComponentKeys: []KeySource{
+				{RawKey: publicPEM},
+				{RawKey: publicDER},
+			}},
+			matches: func(req *protobuf.VerifyDataRequest) bool {
+				keys := req.GetKeySource().GetComponentKeys().GetKeys()
+				return len(keys) == 2 && bytes.Equal(keys[0].GetRawKey(), publicDER) && bytes.Equal(keys[1].GetRawKey(), publicDER)
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			client := &mockedGRPCClient{}
+			client.On("VerifyData", mock.Anything, mock.MatchedBy(test.matches)).Return(&protobuf.VerifyDataResponse{}, nil).Once()
+			if _, err := (&Library{client: client}).VerifyData(context.Background(), VerifyDataPayload{KeySource: test.keySource}); err != nil {
+				t.Fatalf("VerifyData error = %v", err)
+			}
+			client.AssertExpectations(t)
 		})
 	}
 }
