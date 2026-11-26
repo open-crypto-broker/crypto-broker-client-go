@@ -7,7 +7,7 @@ import (
 )
 
 // VerifyDataPayload contains a payload, signature, and verification configuration.
-// Raw public keys in KeySource must be SubjectPublicKeyInfo DER encoded.
+// Raw public keys in KeySource may be SubjectPublicKeyInfo DER or PUBLIC KEY PEM encoded.
 type VerifyDataPayload struct {
 	Profile         string
 	KeySource       SignKeySource
@@ -23,6 +23,7 @@ func (lib *Library) VerifyData(ctx context.Context, payload VerifyDataPayload) (
 	if err != nil {
 		return nil, err
 	}
+
 	if err := validateVerifyDataPayload(payload); err != nil {
 		return nil, err
 	}
